@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "references": [
+    {
+      "purl": "pkg:maven/example/library@1.0.0",
+      "path": "reference-artifacts/library-1.0.0.dex",
+      "sha256": "<verified-reference-hash>",
+      "license": "Apache-2.0",
+      "provenance_url": "https://example.invalid/reference"
+    }
+  ]
+}
+
