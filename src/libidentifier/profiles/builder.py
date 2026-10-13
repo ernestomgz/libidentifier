@@ -27,8 +27,16 @@ def _run_d8(path: Path, d8: Path, android_jar: Path | None) -> bytes:
         out.mkdir()
         cmd = [str(d8), str(path), "--output", str(out)]
         if android_jar is not None:
+            if not android_jar.exists():
+                raise ProfileBuildError(f"android.jar does not exist: {android_jar}")
             cmd.extend(["--lib", str(android_jar)])
-        subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+        try:
+            subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+        except subprocess.CalledProcessError as exc:
+            stderr = exc.stderr.decode("utf-8", errors="replace").strip() if exc.stderr else ""
+            stdout = exc.stdout.decode("utf-8", errors="replace").strip() if exc.stdout else ""
+            detail = stderr or stdout or f"exit status {exc.returncode}"
+            raise ProfileBuildError(f"D8 failed while building profile for {path}: {detail}") from exc
         dex = out / "classes.dex"
         if not dex.exists():
             raise ProfileBuildError("D8 did not produce classes.dex")
