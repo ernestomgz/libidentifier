@@ -13,6 +13,7 @@ from .extractors.elf import ElfFeature
 from .fingerprint.dex_v1 import digest_class, is_trivial_shape
 from .models import CodeLocator, CodeOwnerHint, ComponentMatch
 from .profiles.store import dex_class_rows, release_rows
+from .purl import family_purl
 
 
 def _component_id(name: str, family_id: str, input_sha: str) -> str:
@@ -25,7 +26,7 @@ def _dex_matches(
     *,
     input_sha: str,
     options: IdentifyOptions,
-) -> tuple[list[ComponentMatch], list[CodeOwnerHint], set[tuple[str | None, str | None]]]:
+) -> tuple[list[ComponentMatch], list[CodeOwnerHint], set[tuple[str, str | None, str | None]]]:
     observed = Counter()
     locators: dict[str, list[CodeLocator]] = defaultdict(list)
     observed_descriptors: dict[str, Counter[str]] = defaultdict(Counter)
@@ -132,7 +133,7 @@ def _dex_matches(
 
     components: list[ComponentMatch] = []
     hints: list[CodeOwnerHint] = []
-    assigned: set[tuple[str | None, str | None]] = set()
+    assigned: set[tuple[str, str | None, str | None]] = set()
     for index, cand in enumerate(family_best):
         runner = 0.0
         for j, other in enumerate(family_best):
@@ -167,7 +168,17 @@ def _dex_matches(
         else:
             continue
         family_releases = sorted(by_family[cand["family_id"]], key=lambda c: (-c["coverage"], c["release_id"]))
-        candidate_versions = sorted({releases[c["release_id"]]["version"] for c in family_releases})[: options.max_version_candidates]
+        supported_releases = [c for c in family_releases if c is cand or (
+            c["coverage"] >= options.medium_min_weighted_coverage
+            and c["discriminative"] >= options.medium_min_discriminative_classes
+        ) or (
+            c["match_mode"] == "exact_descriptor"
+            and c["coverage"] >= options.medium_partial_min_weighted_coverage
+            and c["exact_descriptor_matches"] >= options.medium_partial_min_exact_classes
+            and c["unique_anchors"] >= options.medium_partial_min_unique_anchors
+        )]
+        all_versions = sorted({releases[c["release_id"]]["version"] for c in supported_releases})
+        candidate_versions = all_versions[: options.max_version_candidates]
         exact = [
             releases[c["release_id"]]
             for c in family_releases
@@ -192,7 +203,7 @@ def _dex_matches(
             for locator in locator_pool:
                 if remaining <= 0:
                     break
-                key = (locator.member, locator.class_descriptor)
+                key = (locator.container, locator.member, locator.class_descriptor)
                 if key not in assigned:
                     matched_locs.append(locator)
                     if locator.class_descriptor in descriptor_counts:
@@ -203,7 +214,7 @@ def _dex_matches(
         release = releases[cand["release_id"]]
         cid = _component_id(release["name"], cand["family_id"], input_sha)
         for locator in matched_locs:
-            key = (locator.member, locator.class_descriptor)
+            key = (locator.container, locator.member, locator.class_descriptor)
             assigned.add(key)
             hints.append(
                 CodeOwnerHint(
@@ -220,6 +231,9 @@ def _dex_matches(
                 name=release["name"],
                 ecosystem=release["ecosystem"],
                 purl=purl,
+                family_purl=family_purl(release["purl"]),
+                version_candidates_total=len(all_versions),
+                version_candidates_truncated=len(candidate_versions) < len(all_versions),
                 version=version,
                 version_candidates=candidate_versions,
                 identity_confidence=confidence,
@@ -227,6 +241,7 @@ def _dex_matches(
                 identification_methods=["dex_shape_v1"],
                 score=round(cand["coverage"], 6),
                 score_details={
+                    "version_candidate_scores": {releases[c["release_id"]]["version"]: {"weighted_coverage": round(c["coverage"], 6), "exact_descriptor_matches": c["exact_descriptor_matches"]} for c in family_releases},
                     "matched_classes": cand["matched"],
                     "profile_classes": cand["profile_classes"],
                     "exact_descriptor_matches": cand["exact_descriptor_matches"],
@@ -237,7 +252,7 @@ def _dex_matches(
                     "unique_anchors": cand["unique_anchors"],
                     "runner_up_delta": round(runner_delta, 6),
                 },
-                matched_code=sorted(matched_locs, key=lambda x: (x.member or "", x.class_descriptor or "")),
+                matched_code=sorted(matched_locs, key=lambda x: (x.container, x.member or "", x.class_descriptor or "")),
                 source_artifacts=sorted({x.member or x.container for x in matched_locs}),
                 limitations=(
                     ([] if version else ["release version cannot be distinguished from structural fingerprints alone"])
@@ -259,64 +274,66 @@ def _elf_matches(
     *,
     input_sha: str,
     container: str,
+    options: IdentifyOptions,
 ) -> list[ComponentMatch]:
-    components: list[ComponentMatch] = []
+    components: dict[str, ComponentMatch] = {}
     for feature, artifact in elf_features:
-        rows = list(
-            conn.execute(
-                """
-                SELECT r.release_id, r.family_id, r.version, r.purl, f.name, f.ecosystem
-                FROM elf_identity e
-                JOIN library_release r USING(release_id)
-                JOIN library_family f USING(family_id)
-                WHERE e.sha256=?
-                ORDER BY f.name, r.version
-                """,
-                (feature.sha256,),
-            )
-        )
-        if len(rows) != 1:
+        rows = list(conn.execute(
+            """
+            SELECT DISTINCT r.family_id, r.version, r.purl, f.name, f.ecosystem
+            FROM elf_identity e
+            JOIN library_release r USING(release_id)
+            JOIN library_family f USING(family_id)
+            WHERE e.sha256=? ORDER BY f.name, r.version, r.purl
+            """, (feature.sha256,),
+        ))
+        # Identical bytes assigned to different families cannot establish identity.
+        if not rows or len({r[0] for r in rows}) != 1:
             continue
-        rid, fid, version, purl, name, ecosystem = rows[0]
+        fid, _, _, name, ecosystem = rows[0]
+        versions = sorted({r[1] for r in rows})
+        version = versions[0] if len(versions) == 1 else None
+        purls = {r[2] for r in rows}
+        purl = next(iter(purls)) if version and len(purls) == 1 else None
+        families = {family_purl(r[2]) for r in rows}
         cid = _component_id(name, fid, input_sha + feature.sha256)
-        locator = CodeLocator(container=container, member=getattr(artifact, "member", None), sha256=feature.sha256)
-        components.append(
-            ComponentMatch(
-                component_id=cid,
-                name=name,
-                ecosystem=ecosystem,
-                purl=purl,
-                version=version,
-                version_candidates=[version],
-                identity_confidence="high",
-                version_confidence="high",
-                identification_methods=["elf_identity_v1"],
-                score=1.0,
-                score_details={
-                    "matched_classes": 0,
-                    "profile_classes": 0,
-                    "weighted_coverage": 1.0,
-                    "unique_anchors": 1,
-                    "runner_up_delta": 1.0,
-                },
-                matched_code=[locator],
-                source_artifacts=[getattr(artifact, "member", None) or getattr(artifact, "path", None) or "elf"],
-                limitations=[],
-            )
+        locator = CodeLocator(container=getattr(artifact, "container", None) or container,
+                              member=getattr(artifact, "member", None), sha256=feature.sha256)
+        source = getattr(artifact, "member", None) or getattr(artifact, "path", None) or container
+        if cid in components:
+            components[cid].matched_code.append(locator)
+            if source not in components[cid].source_artifacts:
+                components[cid].source_artifacts.append(source)
+            continue
+        candidates = versions[:options.max_version_candidates]
+        components[cid] = ComponentMatch(
+            component_id=cid, name=name, ecosystem=ecosystem, purl=purl,
+            family_purl=next(iter(families)) if len(families) == 1 else None,
+            version=version, version_candidates=candidates,
+            version_candidates_total=len(versions), version_candidates_truncated=len(candidates) < len(versions),
+            identity_confidence="high", version_confidence="high" if version else "unknown",
+            identification_methods=["elf_identity_v1"], score=1.0,
+            score_details={"matched_classes": 0, "profile_classes": 0, "weighted_coverage": 1.0,
+                           "unique_anchors": 1, "runner_up_delta": 1.0},
+            matched_code=[locator], source_artifacts=[source],
+            limitations=[] if version else ["Identical ELF bytes occur in multiple reference releases; exact version is unknown"],
         )
-    return components
+    for component in components.values():
+        component.matched_code.sort(key=lambda loc: (loc.container, loc.member or ""))
+        component.source_artifacts.sort()
+    return list(components.values())
 
 
 def match_inventory(conn: sqlite3.Connection, inventory, options: IdentifyOptions):
     dex_components, hints, assigned = _dex_matches(conn, inventory.dex_classes, input_sha=inventory.input.sha256, options=options)
-    elf_components = _elf_matches(conn, inventory.elf_features, input_sha=inventory.input.sha256, container=inventory.input.path)
+    elf_components = _elf_matches(conn, inventory.elf_features, input_sha=inventory.input.sha256, container=inventory.input.path, options=options)
     components = sorted(dex_components + elf_components, key=lambda c: (c.name, c.component_id))
     hints = sorted(hints, key=lambda h: (h.component_id, h.subject))
     unknown = [
         feature.locator
         for feature in inventory.dex_classes
-        if (feature.locator.member, feature.locator.class_descriptor) not in assigned
+        if (feature.locator.container, feature.locator.member, feature.locator.class_descriptor) not in assigned
     ]
-    unknown.sort(key=lambda x: (x.member or "", x.class_descriptor or ""))
+    unknown.sort(key=lambda x: (x.container, x.member or "", x.class_descriptor or ""))
     return components, hints, unknown
 

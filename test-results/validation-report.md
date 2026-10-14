@@ -2,6 +2,10 @@
 
 Date: 2026-10-14
 
+Latest follow-up: [Complete output and optional offline assessment validation](offline-assessment-validation.md) records Windows/Linux test results, full unmatched output and local OSV integration. The measurements below are historical identification-only results.
+
+Follow-up: [Final SCA readiness validation](sca-readiness-validation.md) independently rechecks the six APKs, corrects version-candidate presentation, validates CycloneDX exports and records the targeted OkHttp 3.14.9 comparison. The historical measurements below describe the earlier seven-profile database.
+
 ## Summary
 
 Stage 1 is now substantially stronger than the initial validation pass. LibIdentifier parses the six sample APKs without parser errors, filters DEX inventories to actual class definitions, rejects old contaminated fingerprint databases, rebuilds a profile database from a Git-tracked catalog, and produces profile-backed matches with clean code evidence.

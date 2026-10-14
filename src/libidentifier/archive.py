@@ -6,6 +6,8 @@ import hashlib
 import posixpath
 import stat
 import zipfile
+import zlib
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 
@@ -29,6 +31,8 @@ def _safe_member_name(name: str) -> bool:
         return False
     if len(name) >= 2 and name[1] == ":":
         return False
+    if ".." in PurePosixPath(name).parts:
+        return False
     normalized = posixpath.normpath(name)
     if normalized == "." or normalized.startswith("../") or normalized == "..":
         return False
@@ -42,6 +46,8 @@ def _is_symlink(info: zipfile.ZipInfo) -> bool:
 
 
 def _interesting_by_path(name: str) -> bool:
+    from .extractors.metadata import ASSETS
+
     lowered = name.lower()
     base = PurePosixPath(lowered).name
     return (
@@ -50,6 +56,7 @@ def _interesting_by_path(name: str) -> bool:
         or lowered.endswith("/pom.properties")
         or lowered == "androidmanifest.xml"
         or base in {"libflutter.so", "libapp.so"}
+        or any(name in paths for paths in ASSETS.values())
     )
 
 
@@ -61,9 +68,16 @@ def read_selected_members(path, options: IdentifyOptions) -> tuple[list[ArchiveM
         infos = sorted(zf.infolist(), key=lambda i: i.filename)
         if len(infos) > options.max_archive_members:
             raise ValueError("archive has too many members")
+        occurrences = Counter(info.filename for info in infos)
+        duplicates_reported = set()
         for info in infos:
             name = info.filename
             if info.is_dir():
+                continue
+            if occurrences[name] > 1:
+                if name not in duplicates_reported:
+                    errors.append(AnalysisError("duplicate_member", name, "Duplicate ZIP member names cannot be located unambiguously; skipped"))
+                    duplicates_reported.add(name)
                 continue
             if not _safe_member_name(name):
                 errors.append(AnalysisError("unsafe_member_path", name, "ZIP member path is unsafe", "warning"))
@@ -85,14 +99,23 @@ def read_selected_members(path, options: IdentifyOptions) -> tuple[list[ArchiveM
                 continue
 
             selected = _interesting_by_path(name)
-            with zf.open(info) as fh:
-                head = fh.read(8)
-                fmt = detect_bytes(head, name=name)
-                selected = selected or fmt in {"dex", "elf"}
-                if not selected:
-                    continue
-                rest = fh.read(options.max_member_uncompressed_bytes + 1)
-            data = head + rest
+            remaining = options.max_total_selected_uncompressed_bytes - total
+            try:
+                with zf.open(info) as fh:
+                    head = fh.read(8)
+                    fmt = detect_bytes(head, name=name)
+                    selected = selected or fmt in {"dex", "elf"}
+                    if not selected:
+                        continue
+                    if info.file_size > remaining:
+                        errors.append(AnalysisError("archive_budget", name, "Selected archive members exceed total byte limit"))
+                        break
+                    limit = min(options.max_member_uncompressed_bytes, remaining)
+                    rest = fh.read(max(0, limit + 1 - len(head)))
+                data = head + rest
+            except (OSError, RuntimeError, zipfile.BadZipFile, zlib.error) as exc:
+                errors.append(AnalysisError("member_read_error", name, str(exc), "error"))
+                continue
             if len(data) > options.max_member_uncompressed_bytes:
                 errors.append(AnalysisError("member_too_large", name, "ZIP member exceeds size limit", "warning"))
                 continue
@@ -101,8 +124,10 @@ def read_selected_members(path, options: IdentifyOptions) -> tuple[list[ArchiveM
                 errors.append(AnalysisError("archive_budget", name, "Selected archive members exceed total byte limit", "warning"))
                 break
             fmt = detect_bytes(data, name=name)
+            if fmt == "unknown" and (name.lower().endswith(".dex") or name.lower().endswith(".so")):
+                errors.append(AnalysisError("member_read_error", name, "Selected binary has invalid magic", "error"))
+                continue
             if fmt in {"unknown", "zip"} and name.lower().endswith("/pom.properties"):
                 fmt = "metadata"
             members.append(ArchiveMember(name=name, format=fmt, data=data, sha256=hashlib.sha256(data).hexdigest()))
     return members, errors
-

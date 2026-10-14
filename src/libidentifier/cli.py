@@ -8,9 +8,15 @@ import os
 import sys
 from pathlib import Path
 
-from .api import identify, inspect
-from .errors import InputError, LibIdentifierError, ProfileError
+from .api import identify, inspect, scan, correlate
+from .vulnerabilities.models import AssessmentResult
+from .vulnerabilities.setup import prepare_options
+from .vulnerabilities.correlate import unavailable_report
+from .vulnerabilities.database import provision_advisory_database, update_advisory_database, validate_advisory_database
+from .errors import AdvisoryError, InputError, LibIdentifierError, ProfileError
 from .models import ScanResult
+from .config import IdentifyOptions
+from .serialization import write_stream
 from .profiles.builder import build_profile, validate_database
 from .profiles.catalog import load_catalog
 from .profiles.fetcher import fetch_catalog, rebuild_database
@@ -20,21 +26,39 @@ from .version import __version__
 
 def _write_result(result: ScanResult, args) -> None:
     if args.format == "json":
-        payload = result.to_json() + "\n"
         if args.output:
-            Path(args.output).write_text(payload, encoding="utf-8")
+            result.write_json(args.output)
         else:
-            sys.stdout.write(payload)
+            write_stream(result, sys.stdout)
     else:
+        if result.components:
+            sys.stdout.write("Library\tVersion\tIdentity confidence\tScore\n")
         for component in result.components:
-            version = component.version or ",".join(component.version_candidates) or "unknown"
+            version = component.version or "unknown"
+            if component.version is None and component.version_candidates:
+                version += " (candidates: " + ",".join(component.version_candidates)
+                version += ", ..." if component.version_candidates_truncated else ""
+                version += ")"
             sys.stdout.write(f"{component.name}\t{version}\t{component.identity_confidence}\t{component.score}\n")
         if not result.components:
             sys.stdout.write("No profile-backed components identified.\n")
+        sys.stdout.write(f"Library identification: {result.coverage.library_identification}; reference coverage is limited.\n")
+        if result.coverage.unknown_classes_truncated:
+            sys.stdout.write(f"Unknown classes: {result.coverage.unknown_classes_emitted} of {result.coverage.unknown_classes_total} emitted (truncated).\n")
+        if result.frameworks_detected:
+            sys.stdout.write("Frameworks (presence indicators):\n")
+            for framework in result.frameworks_detected:
+                locations = sorted({
+                    (e.location.member or e.location.container)
+                    + (":" + e.location.class_descriptor if e.location.class_descriptor else "")
+                    for e in framework.evidence_records
+                })
+                sys.stdout.write(f"{framework.name}\t{framework.confidence}\t{', '.join(locations)}\n")
+                sys.stdout.write(f"  {'; '.join(framework.limitations)}\n")
 
 
 def _cmd_inspect(args) -> int:
-    result = inspect(args.path)
+    result = inspect(args.path, options=IdentifyOptions(max_emitted_unknown_classes=args.max_unknown_classes))
     _write_result(result, args)
     return 4 if any(e.severity == "error" for e in result.errors) else 0
 
@@ -46,7 +70,11 @@ def _cmd_identify(args) -> int:
             "no profile database specified; pass --profiles, set LIBIDENTIFIER_PROFILES, "
             "or build one with 'libidentifier profiles rebuild'"
         )
-    result = identify(args.path, profiles=profiles)
+    result = identify(args.path, profiles=profiles, options=IdentifyOptions(max_emitted_unknown_classes=args.max_unknown_classes))
+    if args.vulnerabilities:
+        assessment = AssessmentResult(result, _assess(result, args))
+        _write_assessment(assessment, args)
+        return _assessment_exit(assessment)
     _write_result(result, args)
     return 4 if any(e.severity == "error" for e in result.errors) else 0
 
@@ -96,6 +124,98 @@ def _cmd_sbom(args) -> int:
     return 0
 
 
+def _assess(result, args):
+    try:
+        report = correlate(result, options=prepare_options(args))
+    except (AdvisoryError, OSError) as exc:
+        report = unavailable_report(result, exc)
+    if report.errors:
+        issue = report.errors[0]
+        download = (' Download OSV-Scanner v2.7.0 from https://github.com/google/osv-scanner/releases.'
+                    if issue.code == 'scanner_missing' else '')
+        print(f"libidentifier: warning: advisories not fully assessed ({issue.code}): {issue.message}{download}", file=sys.stderr)
+    return report
+
+
+def _write_assessment(result, args):
+    if args.format == "json":
+        if args.output:
+            result.write_json(args.output)
+        else:
+            write_stream(result, sys.stdout)
+    else:
+        report = result.vulnerabilities if hasattr(result, "identification") else result
+        if hasattr(result, "identification"):
+            _write_result(result.identification, args)
+        sys.stdout.write(f"Advisory assessment: {report.status}\n")
+        records = {a.id: a for a in report.advisories}
+        for component in report.components:
+            label = component.family_purl or component.component_id
+            sys.stdout.write(f"{label}\t{component.status}\t{component.evaluated_version or 'unknown'}\t{len(component.advisory_ids)} advisory groups\n")
+            sys.stdout.write(f"  {component.reason}\n")
+            for finding in report.findings:
+                if finding.component_id != component.component_id:
+                    continue
+                identifiers = {finding.advisory_id, *finding.related_advisory_ids}
+                for aid in finding.related_advisory_ids or [finding.advisory_id]:
+                    if aid in records:
+                        identifiers.update(records[aid].aliases)
+                status = 'confirmed version match' if finding.applicability == 'affected' else 'potential; version applicability unknown'
+                sys.stdout.write(f"  {', '.join(sorted(identifiers))} [{status}]\n")
+        for issue in report.errors:
+            sys.stdout.write(f"{issue.code}: {issue.message}\n")
+        sys.stdout.write("Advisory matches do not establish reachability or exploitability.\n")
+
+
+def _assessment_exit(result):
+    report = result.vulnerabilities if hasattr(result, "identification") else result
+    if any(e.severity == "error" for e in report.identification_errors):
+        return 4
+    if report.errors and all(e.code == 'scanner_missing' for e in report.errors):
+        return 0  # Identification completed; assessment is explicitly unavailable.
+    if report.status in {"blocked", "failed"}:
+        return 3
+    if report.errors or any(e.severity == "error" for e in report.identification_errors):
+        return 4
+    return 0
+
+
+def _cmd_scan(args):
+    profiles = args.profiles or os.environ.get("LIBIDENTIFIER_PROFILES")
+    if not profiles:
+        raise ProfileError("scan requires --profiles or LIBIDENTIFIER_PROFILES")
+    if args.vulnerabilities:
+        identification = identify(args.path, profiles=profiles,
+            options=IdentifyOptions(max_emitted_unknown_classes=args.max_unknown_classes))
+        result = AssessmentResult(identification, _assess(identification, args))
+    else:
+        result = scan(args.path, profiles=profiles,
+            options=IdentifyOptions(max_emitted_unknown_classes=args.max_unknown_classes))
+    _write_assessment(result, args)
+    return _assessment_exit(result)
+
+
+def _cmd_correlate(args):
+    try:
+        result = ScanResult.from_dict(json.loads(Path(args.input).read_text(encoding="utf-8")))
+    except (KeyError, TypeError, ValueError) as exc:
+        raise InputError(f"invalid identification JSON: {exc}") from exc
+    report = _assess(result, args)
+    _write_assessment(report, args)
+    return _assessment_exit(report)
+
+
+def _cmd_advisories(args):
+    if args.advisory_command == "provision":
+        record = provision_advisory_database(args.database, archives={args.ecosystem: args.archive}, fetched_at=args.fetched_at)
+    elif args.advisory_command == "update":
+        record = update_advisory_database(args.database, ecosystems=[args.ecosystem])
+    else:
+        record = validate_advisory_database(args.database, max_age_days=args.max_database_age_days)
+    sys.stdout.write(record.to_json() + "\n")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="libidentifier")
     parser.add_argument("--version", action="version", version=f"libidentifier {__version__}")
@@ -105,6 +225,7 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_p.add_argument("path")
     inspect_p.add_argument("--format", choices=["json", "table"], default="json")
     inspect_p.add_argument("--output")
+    inspect_p.add_argument("--max-unknown-classes", type=int, default=None)
     inspect_p.set_defaults(func=_cmd_inspect)
 
     identify_p = sub.add_parser("identify")
@@ -112,6 +233,8 @@ def build_parser() -> argparse.ArgumentParser:
     identify_p.add_argument("--profiles")
     identify_p.add_argument("--format", choices=["json", "table"], default="json")
     identify_p.add_argument("--output")
+    identify_p.add_argument("--max-unknown-classes", type=int, default=None)
+    identify_p.add_argument("--vulnerabilities", action="store_true")
     identify_p.set_defaults(func=_cmd_identify)
 
     profiles_p = sub.add_parser("profiles")
@@ -145,10 +268,49 @@ def build_parser() -> argparse.ArgumentParser:
     sbom_p.add_argument("input")
     sbom_p.add_argument("--output", required=True)
     sbom_p.set_defaults(func=_cmd_sbom)
+
+    scan_p = sub.add_parser("scan")
+    scan_p.add_argument("path")
+    scan_p.add_argument("--profiles")
+    scan_p.add_argument("--vulnerabilities", action="store_true")
+    scan_p.add_argument("--max-unknown-classes", type=int, default=None)
+    scan_p.set_defaults(func=_cmd_scan)
+    correlate_p = sub.add_parser("correlate")
+    correlate_p.add_argument("input")
+    correlate_p.set_defaults(func=_cmd_correlate)
+    for command in (scan_p, correlate_p, identify_p):
+        if command is not identify_p:
+            command.add_argument("--format", choices=["json", "table"], default="json")
+            command.add_argument("--output")
+        command.add_argument("--osv-scanner")
+        command.add_argument("--osv-db")
+        command.add_argument("--offline", action="store_true", help="prohibit advisory database downloads (assessment always runs offline)")
+        command.add_argument("--osv-timeout", type=float, default=60)
+        command.add_argument("--max-database-age-days", type=float, default=30)
+        command.add_argument("--no-potential", action="store_true")
+        command.add_argument("--max-potential", type=int, default=100)
+    advisories = sub.add_parser("vulnerabilities")
+    actions = advisories.add_subparsers(dest="advisory_command", required=True)
+    for name in ("provision", "update", "validate"):
+        action = actions.add_parser(name)
+        action.add_argument("--database", required=True)
+        if name != "validate":
+            action.add_argument("--ecosystem", choices=["Maven"], default="Maven")
+        if name == "provision":
+            action.add_argument("--archive", required=True)
+            action.add_argument("--fetched-at")
+        if name == "validate":
+            action.add_argument("--max-database-age-days", type=float, default=30)
+        action.set_defaults(func=_cmd_advisories)
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
+    # JSON and table output must preserve non-ASCII descriptors on Windows,
+    # including when stdout is a pipe rather than an interactive terminal.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
@@ -160,4 +322,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

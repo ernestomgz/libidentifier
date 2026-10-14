@@ -3,9 +3,15 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 from typing import Any
+
+
+def _known(cls, data):
+    """Ignore additive fields when reading a supported schema."""
+    names = {f.name for f in fields(cls)}
+    return {k: v for k, v in data.items() if k in names}
 
 
 def _drop_none(value: Any) -> Any:
@@ -28,7 +34,7 @@ class InputRecord:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "InputRecord":
-        return cls(**data)
+        return cls(**_known(cls, data))
 
 
 @dataclass(frozen=True)
@@ -43,7 +49,7 @@ class AnalysisError:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "AnalysisError":
-        return cls(**data)
+        return cls(**_known(cls, data))
 
 
 @dataclass(frozen=True)
@@ -59,7 +65,7 @@ class CodeLocator:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "CodeLocator":
-        return cls(**data)
+        return cls(**_known(cls, data))
 
 
 @dataclass(frozen=True)
@@ -75,7 +81,7 @@ class CodeOwnerHint:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "CodeOwnerHint":
-        return cls(**data)
+        return cls(**_known(cls, data))
 
 
 @dataclass(frozen=True)
@@ -85,13 +91,27 @@ class ArtifactRecord:
     sha256: str
     status: str
     path: str | None = None
+    container: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ArtifactRecord":
-        return cls(**data)
+        return cls(**_known(cls, data))
+
+
+@dataclass(frozen=True)
+class FrameworkEvidence:
+    indicator: str
+    location: CodeLocator
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "FrameworkEvidence":
+        return cls(data["indicator"], CodeLocator.from_dict(data["location"]))
 
 
 @dataclass(frozen=True)
@@ -101,13 +121,18 @@ class FrameworkHint:
     member: str | None
     confidence: str = "low"
     limitations: list[str] = field(default_factory=list)
+    framework_id: str | None = None
+    evidence_records: list[FrameworkEvidence] = field(default_factory=list)
+    application_logic: str = "not_supported"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "FrameworkHint":
-        return cls(**data)
+        copied = _known(cls, data)
+        copied["evidence_records"] = [FrameworkEvidence.from_dict(x) for x in data.get("evidence_records", [])]
+        return cls(**copied)
 
 
 @dataclass(frozen=True)
@@ -125,13 +150,17 @@ class CoverageRecord:
         default_factory=lambda: {"size_limit": 0, "encrypted": 0, "unsupported": 0, "parse_error": 0}
     )
     limitations: list[str] = field(default_factory=list)
+    library_identification: str = "unknown"
+    unknown_classes_total: int | None = None
+    unknown_classes_emitted: int | None = None
+    unknown_classes_truncated: bool | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "CoverageRecord":
-        return cls(**data)
+        return cls(**_known(cls, data))
 
 
 @dataclass(frozen=True)
@@ -150,6 +179,9 @@ class ComponentMatch:
     matched_code: list[CodeLocator]
     source_artifacts: list[str]
     limitations: list[str] = field(default_factory=list)
+    family_purl: str | None = None
+    version_candidates_total: int | None = None
+    version_candidates_truncated: bool | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
@@ -158,7 +190,7 @@ class ComponentMatch:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ComponentMatch":
-        copied = dict(data)
+        copied = _known(cls, data)
         copied["matched_code"] = [CodeLocator.from_dict(x) for x in copied.get("matched_code", [])]
         return cls(**copied)
 
@@ -176,7 +208,7 @@ class ProfileDatabaseRecord:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ProfileDatabaseRecord":
-        return cls(**data)
+        return cls(**_known(cls, data))
 
 
 @dataclass(frozen=True)
@@ -214,6 +246,9 @@ class ScanResult:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ScanResult":
+        from .config import SCHEMA_VERSION
+        if data["schema_version"] != SCHEMA_VERSION:
+            raise ValueError(f"unsupported scan schema version: {data['schema_version']}")
         return cls(
             schema_version=data["schema_version"],
             tool_name=data["tool_name"],
@@ -231,10 +266,12 @@ class ScanResult:
         )
 
     def to_json(self) -> str:
-        return json.dumps(_drop_none(self.to_dict()), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        from .serialization import iter_json
+        return "".join(iter_json(self))
 
     def write_json(self, path: str | Path) -> None:
-        Path(path).write_text(self.to_json() + "\n", encoding="utf-8")
+        from .serialization import write_json
+        write_json(self, path)
 
 
 @dataclass(frozen=True)
@@ -251,4 +288,3 @@ class ProfileBuildResult:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
-

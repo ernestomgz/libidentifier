@@ -189,8 +189,8 @@ def parse_dex(data: bytes, *, container: str, member: str | None, sha256: str) -
                 )
             )
         access_flags = _flags(getattr(cls, "access_flags", None))
-        if not access_flags and not fields and not methods:
-            continue
+        # The raw class_defs table already proves this is an embedded definition.
+        # Package-private empty classes are valid and must remain in the inventory.
         classes.append(
             ClassFeature(
                 descriptor=descriptor,

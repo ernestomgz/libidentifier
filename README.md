@@ -1,8 +1,10 @@
 # LibIdentifier
 
+Development status: pre-production prototype, not ready for production deployment. Review the documented coverage and resource-safety limitations before integration.
+
 LibIdentifier is a small offline Python package and CLI for identifying known compiled Android and native components from locally built reference profiles. Stage 1 supports APK/ZIP, standalone DEX, standalone ELF, and directories containing those files.
 
-It uses LIEF for DEX and ELF parsing, SQLite for the local profile database, and standard-library archive handling. Scanning does not call the network, Java, D8, OSV-Scanner, Androguard, LibScout, or submitted binaries.
+It uses LIEF for DEX and ELF parsing, SQLite for local reference profiles, and standard-library archive handling. Identification never calls the network or executes submitted binaries. Optional advisory assessment invokes a verified local OSV-Scanner in full offline mode. The CLI can download a missing Maven advisory database during setup; `--offline` prohibits that download.
 
 ## Install
 
@@ -13,6 +15,8 @@ python -m pip install -e .
 The project targets Python 3.11+ and pins `lief==0.17.1`.
 
 For setup, profile database creation and first scans, see [docs/quickstart.md](docs/quickstart.md).
+
+For the public Python/JSON contract, reference provisioning, error handling and Stage 3 compatibility policy, see [docs/integration.md](docs/integration.md).
 
 ## CLI
 
@@ -58,12 +62,13 @@ export_cyclonedx(result, Path("components.cdx.json"))
 - Multiple DEX files in one APK.
 - Multiple libraries in the same DEX when their reference shapes are strong and non-overlapping.
 - Unknown classes and parser errors as explicit output, not silent success.
+- Separate evidence-backed framework presence hints for Flutter, React Native, Jetpack Compose, Cordova, Unity and Xamarin / .NET MAUI, with exact locations and analysis limitations. These do not inventory framework application logic or infer framework versions.
 
 Structural DEX matches normally identify the library family only. Exact versions are reported only when a strong exact-version signal is available, such as an exact trusted artifact hash or exact ELF identity. Otherwise `version` remains `null` and `version_candidates` lists bounded compatible releases.
 
 ## Limitations
 
-- No vulnerability scanning or OSV integration.
+- Optional Maven advisory assessment requires an approved OSV-Scanner v2.7.0 executable and a provisioned local snapshot. It does not establish reachability or exploitability.
 - No JavaScript, Hermes, Dart AOT, Flutter package, or npm dependency identification.
 - DEX matching is conservative and shape-based; aggressive R8/ProGuard transformations may reduce confidence or prevent matches.
 - Stage 1 thresholds are configurable starting points, not calibrated accuracy claims.
@@ -73,3 +78,19 @@ Structural DEX matches normally identify the library family only. Exact versions
 
 The tests generate small synthetic DEX/APK/ELF binaries during the run. They do not vendor third-party libraries and do not mock LIEF parser objects.
 
+## Complete Output and Offline Advisories
+
+API/JSON results include all parsed unmatched classes by default. Optional `--max-unknown-classes` caps affect output only and retain original counts; file JSON output streams to an atomic replacement.
+
+Scanner discovery accepts `osv-scanner` / `osv-scanner.exe` and the original Windows/Linux amd64/arm64 release filenames, so renaming is optional. Darwin binaries are unsupported; `osv-scanner_SHA256SUMS` is a checksum file. Missing-scanner warnings include the [release download page](https://github.com/google/osv-scanner/releases).
+
+```sh
+libidentifier vulnerabilities update --database advisory-db --ecosystem Maven
+libidentifier vulnerabilities validate --database advisory-db
+libidentifier identify app.apk --profiles profiles.sqlite --vulnerabilities --format table
+libidentifier identify app.apk --profiles profiles.sqlite --vulnerabilities --offline --output assessment.json
+libidentifier scan app.apk --profiles profiles.sqlite --vulnerabilities --osv-scanner /opt/tools/osv-scanner --osv-db advisory-db --output assessment.json
+libidentifier correlate inventory.json --osv-scanner /opt/tools/osv-scanner --osv-db advisory-db --format table
+```
+
+Install the matching native executable from [the official v2.7.0 release](https://github.com/google/osv-scanner/releases/tag/v2.7.0) on PATH or in the working directory; `--osv-scanner` preserves explicit selection. The CLI selects `./advisory-db`, then the user cache, or an explicit `--osv-db`. A missing database is provisioned automatically unless `--offline` is set; existing stale/corrupt databases require explicit `update`. Missing scanners warn and retain identification with explicit unassessed JSON. Python APIs remain download-free. Assessment never uploads APKs or inventories, and candidate versions are never installed-version claims. See [the integration guide](docs/integration.md) for APIs, cache locations, offline behavior and stable result contracts.

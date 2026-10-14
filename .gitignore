@@ -13,3 +13,27 @@ test-results/d8-wrapper.cmd
 test-results/reference-artifacts/
 test-results/tmp/
 
+# Local Python environments and tooling caches.
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Optional, downloaded OSV release assets (never vendor executables).
+osv-scanner
+osv-scanner.exe
+osv-scanner_windows_*.exe
+osv-scanner_linux_*
+osv-scanner_darwin_*
+osv-scanner_SHA256SUMS
+
+# Locally provisioned profiles/advisories and downloaded reference metadata.
+advisory-db/
+reference-artifacts/
+*.sqlite
+*.sqlite-journal
+*.sqlite.manifest.json
+test-results/*.pom
+

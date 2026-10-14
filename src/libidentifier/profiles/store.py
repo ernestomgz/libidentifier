@@ -10,7 +10,9 @@ from pathlib import Path
 from urllib.parse import quote
 
 from ..config import FINGERPRINT_ALGORITHM
+from ..errors import ProfileError
 from ..models import ProfileDatabaseRecord
+from ..purl import reference_coordinates
 from .schema import initialize, validate
 
 
@@ -32,10 +34,18 @@ def connect_write(path: str | Path) -> sqlite3.Connection:
 
 def connect_readonly(path: str | Path) -> sqlite3.Connection:
     p = Path(path)
+    if not p.is_file():
+        raise ProfileError(f"profile database does not exist or is not a file: {p}")
     uri = f"file:{quote(str(p.resolve()).replace(chr(92), '/'))}?mode=ro"
-    conn = sqlite3.connect(uri, uri=True)
-    validate(conn)
-    return conn
+    conn = None
+    try:
+        conn = sqlite3.connect(uri, uri=True)
+        validate(conn)
+        return conn
+    except (sqlite3.Error, ProfileError) as exc:
+        if conn is not None:
+            conn.close()
+        raise ProfileError(f"cannot use profile database {p}: {exc}") from exc
 
 
 def database_record(path: str | Path | None) -> ProfileDatabaseRecord:
@@ -46,34 +56,27 @@ def database_record(path: str | Path | None) -> ProfileDatabaseRecord:
     try:
         rows = dict(conn.execute("SELECT key, value FROM db_meta"))
         count = conn.execute("SELECT COUNT(*) FROM library_release").fetchone()[0]
+    except sqlite3.Error as exc:
+        raise ProfileError(f"cannot read profile database metadata {p}: {exc}") from exc
     finally:
         conn.close()
+    try:
+        digest = sha256_file(p)
+    except OSError as exc:
+        raise ProfileError(f"cannot read profile database {p}: {exc}") from exc
     return ProfileDatabaseRecord(
         id=rows.get("database_id"),
         version=rows.get("schema_version"),
-        sha256=sha256_file(p),
+        sha256=digest,
         generated_at=rows.get("generated_at"),
         profile_count=int(count),
     )
 
 
 def family_id_from_purl(purl: str) -> tuple[str, str, str | None, str]:
-    body = purl
-    if body.startswith("pkg:"):
-        body = body[4:]
-    if "@" not in body:
-        raise ValueError("purl must include a version")
-    before_version, version = body.rsplit("@", 1)
-    if "/" in before_version:
-        ecosystem, rest = before_version.split("/", 1)
-    else:
-        ecosystem, rest = "generic", before_version
-    parts = rest.split("/")
-    name = parts[-1]
-    package_name = "/".join(parts[:-1]) or None
+    ecosystem, package_name, name, version, _ = reference_coordinates(purl)
     family_id = hashlib.sha256(f"{ecosystem}:{package_name or ''}:{name}".encode()).hexdigest()[:16]
-    ecosystem_label = "Maven" if ecosystem.lower() == "maven" else ecosystem
-    return family_id, name, package_name, version if version else ""
+    return family_id, name, package_name, version
 
 
 def release_id(family_id: str, version: str, source_sha256: str) -> str:
@@ -197,4 +200,3 @@ def release_rows(conn: sqlite3.Connection, release_ids: set[str]) -> dict[str, d
             "package_name": row[8],
         }
     return rows
-

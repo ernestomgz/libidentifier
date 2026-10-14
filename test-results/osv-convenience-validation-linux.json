@@ -1,0 +1,199 @@
+[
+  {
+    "sample": "AndroGoat-2.0.1.apk",
+    "input_sha256": "3e6f6b538b82874dd94c0d8cdadd69ba54d49b59d2c7eb055073892e8a4fc0e0",
+    "libraries": [
+      "okhttp"
+    ],
+    "frameworks": [],
+    "unknown_classes": 7127,
+    "status": "complete",
+    "potential_findings": 2,
+    "confirmed_findings": 0,
+    "scanner": {
+      "path": "/mnt/c/Users/Windows 11/Desktop/projects/libidentifier/test-results/tmp/convenience-linux/tools/osv-scanner",
+      "version": "2.7.0",
+      "sha256": "160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b"
+    },
+    "database": {
+      "generation": "da0710e548e7453a8e43ddf856611da4",
+      "fetched_at": "2026-10-14T21:42:20.231409+00:00",
+      "age_days": 0.055933,
+      "ecosystems": [
+        "Maven"
+      ],
+      "hashes": {
+        "Maven": "6df61848ce40744419122f1c56c13221e92d461890dd38998f6bd0cf90937e44",
+        "index": "8c8e4e731075fccb61ec5b5afd4fbb56d11b9c468a4ff1105e7739b9e706da69"
+      },
+      "sources": {
+        "Maven": "/mnt/c/Users/Windows 11/Desktop/projects/libidentifier/test-results/tmp/osv/live-db/generations/432ae076abc4452abac64b0c88b7dd46/cache/osv-scalibr/Maven/all.zip"
+      },
+      "schema_version": 1
+    }
+  },
+  {
+    "sample": "InjuredAndroid-1.0.12-release.apk",
+    "input_sha256": "b6b8d2dbd7a428b7754e6e537ba5790c35a73253533454e0768dbf1520a7ed15",
+    "libraries": [],
+    "frameworks": [
+      "Flutter"
+    ],
+    "unknown_classes": 3798,
+    "status": "not_applicable",
+    "potential_findings": 0,
+    "confirmed_findings": 0,
+    "scanner": {
+      "path": "/mnt/c/Users/Windows 11/Desktop/projects/libidentifier/test-results/tmp/convenience-linux/tools/osv-scanner",
+      "version": "2.7.0",
+      "sha256": "160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b"
+    },
+    "database": {
+      "generation": "da0710e548e7453a8e43ddf856611da4",
+      "fetched_at": "2026-10-14T21:42:20.231409+00:00",
+      "age_days": 0.056087,
+      "ecosystems": [
+        "Maven"
+      ],
+      "hashes": {
+        "Maven": "6df61848ce40744419122f1c56c13221e92d461890dd38998f6bd0cf90937e44",
+        "index": "8c8e4e731075fccb61ec5b5afd4fbb56d11b9c468a4ff1105e7739b9e706da69"
+      },
+      "sources": {
+        "Maven": "/mnt/c/Users/Windows 11/Desktop/projects/libidentifier/test-results/tmp/osv/live-db/generations/432ae076abc4452abac64b0c88b7dd46/cache/osv-scalibr/Maven/all.zip"
+      },
+      "schema_version": 1
+    }
+  },
+  {
+    "sample": "InsecureBankv2-2.3.1.apk",
+    "input_sha256": "b18af2a0e44d7634bbcdf93664d9c78a2695e050393fcfbb5e8b91f902d194a4",
+    "libraries": [],
+    "frameworks": [],
+    "unknown_classes": 6529,
+    "status": "not_applicable",
+    "potential_findings": 0,
+    "confirmed_findings": 0,
+    "scanner": {
+      "path": "/mnt/c/Users/Windows 11/Desktop/projects/libidentifier/test-results/tmp/convenience-linux/tools/osv-scanner",
+      "version": "2.7.0",
+      "sha256": "160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b"
+    },
+    "database": {
+      "generation": "da0710e548e7453a8e43ddf856611da4",
+      "fetched_at": "2026-10-14T21:42:20.231409+00:00",
+      "age_days": 0.05622,
+      "ecosystems": [
+        "Maven"
+      ],
+      "hashes": {
+        "Maven": "6df61848ce40744419122f1c56c13221e92d461890dd38998f6bd0cf90937e44",
+        "index": "8c8e4e731075fccb61ec5b5afd4fbb56d11b9c468a4ff1105e7739b9e706da69"
+      },
+      "sources": {
+        "Maven": "/mnt/c/Users/Windows 11/Desktop/projects/libidentifier/test-results/tmp/osv/live-db/generations/432ae076abc4452abac64b0c88b7dd46/cache/osv-scalibr/Maven/all.zip"
+      },
+      "schema_version": 1
+    }
+  },
+  {
+    "sample": "allsafe-1.6.apk",
+    "input_sha256": "d6792d6634a033f048f935f1269179d3c27b859c4c34b1e9e5b008a88375efd9",
+    "libraries": [
+      "okhttp",
+      "rootbeer-lib"
+    ],
+    "frameworks": [],
+    "unknown_classes": 11750,
+    "status": "partial",
+    "potential_findings": 2,
+    "confirmed_findings": 0,
+    "scanner": {
+      "path": "/mnt/c/Users/Windows 11/Desktop/projects/libidentifier/test-results/tmp/convenience-linux/tools/osv-scanner",
+      "version": "2.7.0",
+      "sha256": "160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b"
+    },
+    "database": {
+      "generation": "da0710e548e7453a8e43ddf856611da4",
+      "fetched_at": "2026-10-14T21:42:20.231409+00:00",
+      "age_days": 0.056352,
+      "ecosystems": [
+        "Maven"
+      ],
+      "hashes": {
+        "Maven": "6df61848ce40744419122f1c56c13221e92d461890dd38998f6bd0cf90937e44",
+        "index": "8c8e4e731075fccb61ec5b5afd4fbb56d11b9c468a4ff1105e7739b9e706da69"
+      },
+      "sources": {
+        "Maven": "/mnt/c/Users/Windows 11/Desktop/projects/libidentifier/test-results/tmp/osv/live-db/generations/432ae076abc4452abac64b0c88b7dd46/cache/osv-scalibr/Maven/all.zip"
+      },
+      "schema_version": 1
+    }
+  },
+  {
+    "sample": "diva.apk",
+    "input_sha256": "390f1cd8b4745c7648009128011c63bbdf70f9719c8bda2420bdbb45f83a7c72",
+    "libraries": [],
+    "frameworks": [],
+    "unknown_classes": 6493,
+    "status": "not_applicable",
+    "potential_findings": 0,
+    "confirmed_findings": 0,
+    "scanner": {
+      "path": "/mnt/c/Users/Windows 11/Desktop/projects/libidentifier/test-results/tmp/convenience-linux/tools/osv-scanner",
+      "version": "2.7.0",
+      "sha256": "160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b"
+    },
+    "database": {
+      "generation": "da0710e548e7453a8e43ddf856611da4",
+      "fetched_at": "2026-10-14T21:42:20.231409+00:00",
+      "age_days": 0.056467,
+      "ecosystems": [
+        "Maven"
+      ],
+      "hashes": {
+        "Maven": "6df61848ce40744419122f1c56c13221e92d461890dd38998f6bd0cf90937e44",
+        "index": "8c8e4e731075fccb61ec5b5afd4fbb56d11b9c468a4ff1105e7739b9e706da69"
+      },
+      "sources": {
+        "Maven": "/mnt/c/Users/Windows 11/Desktop/projects/libidentifier/test-results/tmp/osv/live-db/generations/432ae076abc4452abac64b0c88b7dd46/cache/osv-scalibr/Maven/all.zip"
+      },
+      "schema_version": 1
+    }
+  },
+  {
+    "sample": "ovaa-1.0.0-app-debug.apk",
+    "input_sha256": "073d87a2bcbfcd539146854681d4968960dbee0209673b17cdbe1aaed6705233",
+    "libraries": [
+      "gson",
+      "okhttp",
+      "retrofit"
+    ],
+    "frameworks": [],
+    "unknown_classes": 7410,
+    "status": "partial",
+    "potential_findings": 2,
+    "confirmed_findings": 0,
+    "scanner": {
+      "path": "/mnt/c/Users/Windows 11/Desktop/projects/libidentifier/test-results/tmp/convenience-linux/tools/osv-scanner",
+      "version": "2.7.0",
+      "sha256": "160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b"
+    },
+    "database": {
+      "generation": "da0710e548e7453a8e43ddf856611da4",
+      "fetched_at": "2026-10-14T21:42:20.231409+00:00",
+      "age_days": 0.056585,
+      "ecosystems": [
+        "Maven"
+      ],
+      "hashes": {
+        "Maven": "6df61848ce40744419122f1c56c13221e92d461890dd38998f6bd0cf90937e44",
+        "index": "8c8e4e731075fccb61ec5b5afd4fbb56d11b9c468a4ff1105e7739b9e706da69"
+      },
+      "sources": {
+        "Maven": "/mnt/c/Users/Windows 11/Desktop/projects/libidentifier/test-results/tmp/osv/live-db/generations/432ae076abc4452abac64b0c88b7dd46/cache/osv-scalibr/Maven/all.zip"
+      },
+      "schema_version": 1
+    }
+  }
+]

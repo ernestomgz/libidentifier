@@ -20,6 +20,7 @@ from ..fingerprint.dex_v1 import digest_counts
 from ..fingerprint.dex_v1 import digest_class
 from ..fingerprint.elf_v1 import identity_record
 from ..models import ProfileBuildResult
+from ..purl import reference_coordinates
 from .store import connect_write, sha256_file, upsert_release
 
 
@@ -65,6 +66,10 @@ def build_profile(
     android_jar=None,
     reference_sha256: str | None = None,
 ) -> ProfileBuildResult:
+    try:
+        reference_coordinates(purl)
+    except ValueError as exc:
+        raise ProfileBuildError(str(exc)) from exc
     ref = Path(path)
     if not ref.exists() or not ref.is_file():
         raise ProfileBuildError("reference input must be an existing file")

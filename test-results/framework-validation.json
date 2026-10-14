@@ -1,0 +1,112 @@
+[
+  {
+    "sample": "allsafe-1.6.apk",
+    "frameworks": [],
+    "libraries": [
+      "okhttp",
+      "rootbeer-lib"
+    ],
+    "errors": []
+  },
+  {
+    "sample": "AndroGoat-2.0.1.apk",
+    "frameworks": [],
+    "libraries": [
+      "okhttp"
+    ],
+    "errors": []
+  },
+  {
+    "sample": "diva.apk",
+    "frameworks": [],
+    "libraries": [],
+    "errors": []
+  },
+  {
+    "sample": "InjuredAndroid-1.0.12-release.apk",
+    "frameworks": [
+      {
+        "name": "Flutter",
+        "evidence": "Flutter asset layout (content not analyzed); defined framework runtime class; parsed ELF runtime: libflutter.so",
+        "member": "assets/flutter_assets/AssetManifest.json",
+        "confidence": "high",
+        "limitations": [
+          "Dart application logic and package dependencies are not analyzed",
+          "Presence does not prove active use; no framework version is inferred"
+        ],
+        "framework_id": "flutter",
+        "evidence_records": [
+          {
+            "indicator": "Flutter asset layout (content not analyzed)",
+            "location": {
+              "container": "samples\\InjuredAndroid-1.0.12-release.apk",
+              "member": "assets/flutter_assets/AssetManifest.json",
+              "class_descriptor": null,
+              "method_descriptor": null,
+              "sha256": "4a9b3de7eec9ba46b279bbccd132e32f52d6d555d79dda4aa7f3bcb4e9bd651f"
+            }
+          },
+          {
+            "indicator": "defined framework runtime class",
+            "location": {
+              "container": "samples\\InjuredAndroid-1.0.12-release.apk",
+              "member": "classes.dex",
+              "class_descriptor": "Lio/flutter/embedding/android/FlutterActivity;",
+              "method_descriptor": null,
+              "sha256": "5a23b5fee5481e101d4c6947d1066903ab8f2ba95e8a12e3956d15544b130a33"
+            }
+          },
+          {
+            "indicator": "parsed ELF runtime: libflutter.so",
+            "location": {
+              "container": "samples\\InjuredAndroid-1.0.12-release.apk",
+              "member": "lib/arm64-v8a/libflutter.so",
+              "class_descriptor": null,
+              "method_descriptor": null,
+              "sha256": "90a46e9cd7deaf0708c6ffd42e446ea606628f79d1e062d28eb7889ea2997cf7"
+            }
+          },
+          {
+            "indicator": "parsed ELF runtime: libflutter.so",
+            "location": {
+              "container": "samples\\InjuredAndroid-1.0.12-release.apk",
+              "member": "lib/armeabi-v7a/libflutter.so",
+              "class_descriptor": null,
+              "method_descriptor": null,
+              "sha256": "f40422e4ecdc33d6c9f56479e744dfe4abfc27df990bf3c14a0192e2a27cefe5"
+            }
+          },
+          {
+            "indicator": "parsed ELF runtime: libflutter.so",
+            "location": {
+              "container": "samples\\InjuredAndroid-1.0.12-release.apk",
+              "member": "lib/x86_64/libflutter.so",
+              "class_descriptor": null,
+              "method_descriptor": null,
+              "sha256": "0743fe88f0adc488e289cd730c881a15b8ffddba052bf8ac9d86893d613f2189"
+            }
+          }
+        ],
+        "application_logic": "not_supported"
+      }
+    ],
+    "libraries": [],
+    "errors": []
+  },
+  {
+    "sample": "InsecureBankv2-2.3.1.apk",
+    "frameworks": [],
+    "libraries": [],
+    "errors": []
+  },
+  {
+    "sample": "ovaa-1.0.0-app-debug.apk",
+    "frameworks": [],
+    "libraries": [
+      "gson",
+      "okhttp",
+      "retrofit"
+    ],
+    "errors": []
+  }
+]

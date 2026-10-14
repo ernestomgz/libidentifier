@@ -50,6 +50,14 @@
       "url": "https://repo.maven.apache.org/maven2/com/scottyab/rootbeer-lib/0.0.8/rootbeer-lib-0.0.8.aar",
       "sha256": "4750bedff6605ed4ca96e2dd9b13fd6216ba55eb7abf914cbd9f9f00566ad82a",
       "license": "Apache-2.0"
+    },
+    {
+      "purl": "pkg:maven/com.squareup.okhttp3/okhttp@3.14.9",
+      "repository": "maven-central",
+      "url": "https://repo.maven.apache.org/maven2/com/squareup/okhttp3/okhttp/3.14.9/okhttp-3.14.9.jar",
+      "sha256": "2570fab55515cbf881d7a4ceef49fc515490bc027057e666776a2832465aeca0",
+      "license": "Apache-2.0",
+      "notes": "Targeted SCA validation against the dependency declared by Retrofit 2.9.0; not an installed-version claim"
     }
   ]
 }

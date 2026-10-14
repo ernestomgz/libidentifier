@@ -5,8 +5,9 @@ from __future__ import annotations
 import sqlite3
 from datetime import datetime, timezone
 
-from ..config import FINGERPRINT_ALGORITHM, SCHEMA_VERSION
+from ..config import FINGERPRINT_ALGORITHM, DATABASE_SCHEMA_VERSION
 from ..errors import ProfileError
+from ..purl import reference_coordinates
 
 DDL = """
 CREATE TABLE IF NOT EXISTS db_meta (
@@ -60,7 +61,7 @@ CREATE INDEX IF NOT EXISTS idx_elf_sha256 ON elf_identity(sha256);
 def initialize(conn: sqlite3.Connection) -> None:
     conn.executescript(DDL)
     meta = {
-        "schema_version": str(SCHEMA_VERSION),
+        "schema_version": str(DATABASE_SCHEMA_VERSION),
         "fingerprint_algorithm": FINGERPRINT_ALGORITHM,
         "database_id": "local",
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
@@ -71,7 +72,7 @@ def initialize(conn: sqlite3.Connection) -> None:
 
 def validate(conn: sqlite3.Connection) -> None:
     rows = dict(conn.execute("SELECT key, value FROM db_meta"))
-    if rows.get("schema_version") != str(SCHEMA_VERSION):
+    if rows.get("schema_version") != str(DATABASE_SCHEMA_VERSION):
         raise ProfileError("profile database schema version is incompatible")
     if rows.get("fingerprint_algorithm") != FINGERPRINT_ALGORITHM:
         raise ProfileError("profile database fingerprint algorithm is incompatible")
@@ -87,4 +88,18 @@ def validate(conn: sqlite3.Connection) -> None:
     missing = required - actual
     if missing:
         raise ProfileError(f"profile database is missing tables: {', '.join(sorted(missing))}")
-
+    incompatible = conn.execute(
+        "SELECT COUNT(*) FROM library_release WHERE fingerprint_algorithm != ?",
+        (FINGERPRINT_ALGORITHM,),
+    ).fetchone()[0]
+    if incompatible:
+        raise ProfileError("profile database contains incompatible release fingerprints; rebuild it")
+    for purl, version, name, namespace in conn.execute(
+        "SELECT r.purl, r.version, f.name, f.package_name FROM library_release r JOIN library_family f USING(family_id)"
+    ):
+        try:
+            _, expected_namespace, expected_name, expected_version, _ = reference_coordinates(purl)
+        except ValueError as exc:
+            raise ProfileError(f"profile database has an invalid reference PURL: {exc}") from exc
+        if (version, name, namespace) != (expected_version, expected_name, expected_namespace):
+            raise ProfileError("profile database identity disagrees with reference PURL; rebuild it")
