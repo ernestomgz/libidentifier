@@ -129,7 +129,7 @@ def test_discovered_real_scanner_and_tables(installed, versioned, capsys, monkey
         purl=None, version_confidence='unknown', version_candidates=['1.0'])])
     unknown.write_json(inventory)
     assert main(['correlate', str(inventory), '--offline', '--format', 'table']) == 0
-    assert 'potential; version applicability unknown' in capsys.readouterr().out
+    assert 'POTENTIAL' in capsys.readouterr().out
 
 
 def test_automatic_provision_and_existing_database_no_download(installed, tmp_path, monkeypatch):

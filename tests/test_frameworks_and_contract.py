@@ -81,9 +81,9 @@ def test_multiple_frameworks_api_json_table(tmp_path, demo_db, capsys):
     assert json.loads(out.read_text()) == payload
     assert main(['identify', str(apk), '--profiles', str(demo_db), '--format', 'table']) == 0
     table = capsys.readouterr().out
-    assert 'libalpha\t' in table
+    assert 'libalpha' in table and 'LIBRARIES' in table
     for f in r.frameworks_detected:
-        assert f'{f.name}\t{f.confidence}\t' in table
+        assert f'{f.name} — {f.confidence.capitalize()}' in table
     assert 'classes.dex:Lio/flutter/' in table
     assert inspect(apk).frameworks_detected == r.frameworks_detected
     assert r.to_json() == identify(apk, profiles=demo_db).to_json()

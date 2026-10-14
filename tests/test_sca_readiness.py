@@ -51,8 +51,9 @@ def test_versionless_identity_and_table(tmp_path, demo_db, capsys):
     assert c.version_candidates_total == 1 and not c.version_candidates_truncated
     assert main(['identify', str(apk), '--profiles', str(demo_db), '--format', 'table']) == 0
     output = capsys.readouterr().out
-    assert 'Library\tVersion\tIdentity confidence\tScore' in output
-    assert 'libalpha\tunknown (candidates: 1.0.0)\thigh' in output
+    assert 'Library' in output and 'Identity' in output and 'Version' in output
+    assert 'libalpha' in output and 'Unknown [1.0.0]' in output and 'High   (' in output
+    assert 'VULNERABILITIES' not in output
     old = c.to_dict()
     for field in ('family_purl', 'version_candidates_total', 'version_candidates_truncated'):
         old.pop(field)

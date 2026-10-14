@@ -60,7 +60,7 @@ def prepare_options(args):
     database = discover_database(args.osv_db)
     options = VulnerabilityOptions(scanner, database, timeout_seconds=args.osv_timeout,
         max_database_age_days=args.max_database_age_days, discover_unknown_versions=not args.no_potential,
-        max_potential_advisories_per_component=args.max_potential)
+        max_potential_advisories_per_component=args.max_potential, min_identity_score=args.min_identity_score)
     verify_scanner(options)
     # Never replace an existing empty, incomplete, corrupt or stale directory.
     # Maintenance commands provide explicit repair/update authorization.

@@ -143,7 +143,7 @@ result = ScanResult.from_dict(json.loads(completed.stdout))
 
 `subprocess.run(..., timeout=180)` kills and waits for the scan child on expiry and raises `subprocess.TimeoutExpired`; treat this as a failed scan, not an empty result. Retain the previous completed result separately, and do not read a timed-out output file as complete JSON. Scans do not launch analysis subprocesses. Process startup may itself delay timeout delivery.
 
-CLI scan exit codes: `0` means no error-severity analysis issue (warnings may exist); `2` means fatal input error or argparse usage error; `3` means a database or other handled operational error; `4` means a returned result contains error-severity analysis issues. Fatal failures write diagnostics to stderr and no scan JSON. `--output scan-result.json` saves JSON instead of stdout. `--format table` preserves library rows and adds a framework section with confidence, locations and limitations; unknown versions are shown as `unknown (candidates: ...)`, never as installed versions. Table text is for humans and is not a machine contract.
+CLI scan exit codes: `0` means no error-severity analysis issue (warnings may exist); `2` means fatal input error or argparse usage error; `3` means a database or other handled operational error; `4` means a returned result contains error-severity analysis issues. Fatal failures write diagnostics to stderr and no scan JSON. `--output scan-result.json` saves JSON instead of stdout. `--format table` preserves library rows and adds a framework section with confidence, locations and limitations; unknown versions are shown as `Unknown [reference candidates]`, never as installed versions. Table text is for humans and is not a machine contract.
 
 ## Public functions and options
 
@@ -262,7 +262,7 @@ Keep these states distinct:
 
 | State | Public evidence and consumer interpretation |
 | --- | --- |
-| Supported identity and exact version | `identity_confidence=high`, non-null `version`, `version_confidence=high`, and versioned `purl` support version-specific advisory correlation |
+| Supported identity and exact version | Identity score meeting the configured threshold, non-null `version`, `version_confidence=high`, and consistent versioned `purl` support version-specific advisory correlation |
 | Identified family, unknown version | Use `family_purl` and identity confidence for package-level advisory discovery; `version=null` remains unknown even with one candidate |
 | Uncertain identity | Medium/low identity confidence needs consumer review; do not silently promote it to a confirmed dependency |
 | Technology indicator | `frameworks_detected` describes runtime/UI technology presence; no dependency identity or framework version is inferred from it |
@@ -341,6 +341,7 @@ options = VulnerabilityOptions(
     max_database_age_days=30,
     discover_unknown_versions=True,
     max_potential_advisories_per_component=100,
+    min_identity_score=0.75,
 )
 
 # Reassess a cached inventory without parsing the APK again.
@@ -376,6 +377,8 @@ The maintenance functions return `AdvisoryDatabaseRecord`; `archives` maps the s
 
 `VulnerabilityOptions` also has `max_output_bytes=67108864`, bounding combined OSV stdout/stderr. Timeout and database-age options must be finite and positive; potential-advisory caps may be zero. Package-only discovery is enabled by default and bounded to 100 source records per component. Use `discover_unknown_versions=False` (`--no-potential`) to disable it. Zero discovery output still reports the original record count and truncation. Candidate reference versions are never queried as installed versions.
 
+Advisory attribution uses `min_identity_score=0.75` by default (inclusive, on the 0–1 score, not a percentage). Configure it with the API option or `--min-identity-score 0.85`; values must be finite and between 0 and 1. The full stored score is compared, while tables round scores to two decimals. Missing/invalid scores are unassessed. The categorical `identity_confidence` remains independent and is retained in findings; a medium-confidence match scoring 0.837 qualifies. This is an attribution policy, not a calibrated probability or an exact-version signal. Successful reports record the chosen threshold in `limitations`. Exact-version assessment still requires high version confidence and a consistent versioned PURL. SBOM's existing high-identity/high-version filter is unchanged.
+
 ## Assessment CLI
 
 ```sh
@@ -391,6 +394,10 @@ Substitute a Windows executable path as needed. Plain `identify` retains its ide
 Assessment CLI exit codes describe operational success, not a vulnerability policy: `0` means a usable result was returned (affected/potential/unassessed components may exist), `2` is an identification/usage error, `3` is a blocked/failed assessment or maintenance error, and `4` is an error-bearing partial assessment or identification result. Missing scanners gracefully return 0 when identification succeeded, with a short stderr warning, report `status=blocked`, error `code=scanner_missing` and component `status=not_assessed`, `reason=scanner_missing`. An empty findings array in that report does not mean zero vulnerabilities. Other preparation failures retain the inventory and structured errors (for example `database_provision_failed`) and return 3. A policy-limited `partial` report without operational errors returns 0; consumers must inspect status and coverage. Findings do not change the exit code automatically. JSON results are retained for blocked/failed/partial assessment stages when identification succeeded. Standalone correlation preserves original identification coverage and issues as well. Maintenance fatal errors write stderr. OSV's raw exit codes are normalized internally.
 
 ## Assessment result schema 1
+
+`--format table` prints an input title and aligned `LIBRARIES` columns for library, categorical identity with numeric score, version/reference candidates, and (when requested) advisory summary. A `VULNERABILITIES` section appears only for requested assessment (`--vulnerabilities`, or the assessment-only `correlate` command). It distinguishes `CONFIRMED` exact-version matches, `POTENTIAL` package advisories, unassessed components and scanner failures. Plain `identify`, `inspect` and `scan` without the flag have no vulnerability section. Narrow terminals use stacked fields; longer cells and evidence wrap by display width. Output is plain text, with ANSI/control escapes stripped from data, so it also works when redirected.
+
+Affected-version text comes only from OSV records for the attributed package. Simple single-boundary ranges preserve inclusive `introduced`/`last_affected` and exclusive `fixed` endpoints. Separate ranges remain joined with OR. Complex event timelines or `limit` boundaries are shown as OSV events without sorting or comparing Maven version strings; qualifiers remain intact. Short explicit version lists are shown literally, while longer lists show their exact count and refer to full JSON. Unsupported/missing ranges never cause an invented range; partial summaries explicitly refer to additional JSON ranges. No `Affected:` label appears if usable version data is unavailable. These summaries describe advisory scope, not applicability to an unknown installed version. Version evaluation remains OSV-Scanner's responsibility. See the [OSV event semantics](https://ossf.github.io/osv-schema/#affectedrangesevents-fields).
 
 Vulnerability models live separately in `libidentifier.vulnerabilities.models`; `AssessmentResult`, `VulnerabilityReport` and `VulnerabilityOptions` are exported at the package root. The assessment schemas are independent of identification schema 1, fingerprint algorithms and both database formats. `to_dict`, `to_json`, streaming `write_json` and tolerant `from_dict` are provided. Unsupported schema/result kinds raise `ValueError`; unknown additive fields are ignored, including in nested records. No consumer parses OSV JSON.
 
@@ -408,10 +415,10 @@ Report statuses: `not_requested`, `not_applicable` (no identified components to 
 
 Component statuses:
 
-- `affected`: high-confidence identity and exact version were passed to official OSV; it matched an advisory for that reliable version. `match_basis=exact_version`, `applicability=affected`.
-- `potential`: high-confidence package identity has active advisory records in the local index, but its installed version is not reliable. `match_basis=package_identity`, `applicability=potential`, `evaluated_version=null`.
+- `affected`: identity score met the configured threshold and a high-confidence exact version was passed to official OSV; it matched an advisory for that reliable version. `match_basis=exact_version`, `applicability=affected`.
+- `potential`: package identity meets the configured score threshold and has active advisory records in the local index, but its installed version is not reliable. `match_basis=package_identity`, `applicability=potential`, `evaluated_version=null`.
 - `not_affected`: OSV evaluated the reliable version against a fresh, validated supported ecosystem snapshot and returned no matches. This means not affected by the evaluated advisories, not universally free of vulnerabilities.
-- `not_assessed`: insufficient identity confidence, unsupported/missing package coordinate, unavailable data, unknown version with discovery disabled/no package records, or scanner failure. Its reason explains the limitation.
+- `not_assessed`: identity score below threshold/unavailable, unsupported/missing package coordinate, unavailable data, unknown version with discovery disabled/no package records, or scanner failure. Its reason explains the limitation.
 
 Source advisory records are deduplicated by OSV ID. Alias-connected records share one canonical finding per component and basis, while retaining all original IDs/records and severity provenance. Discovery totals count source records before capping/alias grouping, not distinct CVEs. Withdrawn advisories are excluded from active discovery/matches. Advisory severity is not identification confidence. A match never proves vulnerable code is present on a reachable execution path or exploitable; consuming applications retain exposure/triage policy.
 

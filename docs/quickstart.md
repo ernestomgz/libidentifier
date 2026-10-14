@@ -123,7 +123,7 @@ export_cyclonedx(result, "components.cdx.json")
 
 CycloneDX export includes only high-confidence exact-version components. Structural DEX matches usually identify a family and leave `version` as `null`.
 
-Table output labels these as `unknown (candidates: ...)`. Candidate reference versions are not confirmed installed versions. `family_purl` preserves a versionless package identity for downstream advisory discovery, while coverage reports unmatched-class totals and truncation. The filtered SBOM declares incomplete inventory; an empty SBOM does not mean the APK has no dependencies.
+Table output labels these as `Unknown [reference candidates]`. Candidate reference versions are not confirmed installed versions. `family_purl` preserves a versionless package identity for downstream advisory discovery, while coverage reports unmatched-class totals and truncation. The filtered SBOM declares incomplete inventory; an empty SBOM does not mean the APK has no dependencies.
 
 ## Updating the Catalog
 
@@ -180,4 +180,6 @@ libidentifier scan samples/ovaa-1.0.0-app-debug.apk --profiles profiles.sqlite -
 
 On Windows, substitute your `osv-scanner.exe` path if using an override. Only setup of an absent database or explicit `update` downloads the fixed Maven archive; OSV assessment is always offline. Python scanning APIs never download. Air-gapped users can use `vulnerabilities provision --database advisory-db --archive Maven-all.zip --fetched-at <actual-retrieval-ISO-timestamp>` and assess with `--offline`.
 
-High-confidence exact versions can produce affected-version matches. Unknown versions can produce potential package advisories but never confirmed applicability. Medium identities and unsupported ecosystems remain unassessed. Existing APK samples do not have reliable installed library versions; expect potential or unassessed results. Findings do not prove reachability or exploitability. Full commands, public models, Python examples and error handling are in [integration.md](integration.md).
+High-confidence exact versions can produce affected-version matches. Unknown versions can produce potential package advisories but never confirmed applicability. Advisory attribution requires a valid identity score of at least 0.75 by default, including qualifying medium-confidence identities; use `--min-identity-score 0.85` to change it, or Python `VulnerabilityOptions(min_identity_score=0.85, scanner=..., database=...)`. Unsupported ecosystems remain unassessed. Existing APK samples do not have reliable installed library versions; expect potential or unassessed results. Findings do not prove reachability or exploitability. Full commands, public models, Python examples and error handling are in [integration.md](integration.md).
+
+Tables show library names, identity labels with scores, unknown versions with reference candidates, and advisory counts when requested. The vulnerability section distinguishes confirmed and potential matches and preserves affected-range boundaries from OSV; unavailable version ranges have no `Affected:` message. Columns wrap in narrow terminals, with stacked fields on very narrow screens. In OVAA, Retrofit's score of 0.837 qualifies at the default threshold despite its medium identity label.

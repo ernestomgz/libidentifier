@@ -27,6 +27,7 @@ class VulnerabilityOptions:
     discover_unknown_versions: bool = True
     max_potential_advisories_per_component: int = 100
     max_output_bytes: int = 64 * 1024 * 1024
+    min_identity_score: float = 0.75
     def __post_init__(self):
         import math
         if not isinstance(self.discover_unknown_versions, bool):
@@ -39,6 +40,9 @@ class VulnerabilityOptions:
             value = getattr(self, name)
             if not isinstance(value, int) or isinstance(value, bool) or value < (1 if name == 'max_output_bytes' else 0):
                 raise ValueError(f'{name} has an invalid limit')
+        if (not isinstance(self.min_identity_score, (int, float)) or isinstance(self.min_identity_score, bool)
+                or not math.isfinite(self.min_identity_score) or not 0 <= self.min_identity_score <= 1):
+            raise ValueError('min_identity_score must be finite and between 0 and 1')
 
 @dataclass(frozen=True)
 class ScannerRecord(JsonModel):

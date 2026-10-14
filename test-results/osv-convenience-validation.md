@@ -2,6 +2,8 @@
 
 Validated 2026-10-15 (Europe/Madrid). This supplements the earlier offline assessment report; previous test counts describe the earlier implementation.
 
+The later [table and score-policy validation](table-validation.md) adds the configurable 0.75 score gate, replaces the earlier high-label gate, and verifies the compact table on both platforms. In that later scan OVAA Retrofit is assessed and has two potential advisory groups; historical counts below describe the earlier policy.
+
 Pre-production commit verification: the complete current Windows suite passed **99 tests in 78.59 seconds** using `.pytest_tmp/preproduction-commit`; staged whitespace checks passed. This remains a development prototype, not a production release. Downloaded executables, local databases/manifests and caches are excluded from the commit; previously tracked regression fixtures remain available.
 
 Release-filename follow-up: discovery now accepts original Windows/Linux amd64/arm64 executable names as well as conventional names, preferring the native architecture among release assets. Missing-scanner stderr includes `https://github.com/google/osv-scanner/releases` and the qualified version. Darwin assets and `osv-scanner_SHA256SUMS` are excluded. Focused suite: **20 passed on Windows in 13.90 seconds**, **20 passed on Linux in 28.82 seconds**. Both platforms executed the approved amd64 binary under its original release filename; arm64 selection was tested synthetically, without ARM hardware. Explicit overrides and JSON contracts are unchanged.

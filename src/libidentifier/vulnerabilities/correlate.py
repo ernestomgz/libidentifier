@@ -2,6 +2,7 @@
 from __future__ import annotations
 from dataclasses import replace
 import sqlite3
+import math
 from ..errors import AdvisoryError
 from ..models import AnalysisError
 from ..purl import reference_coordinates
@@ -88,7 +89,8 @@ def correlate(result, *, options):
     assessments = [ComponentAssessment(c.component_id, c.family_purl, 'not_assessed', 'Assessment unavailable',
         None, c.identity_confidence, c.version_confidence, c.matched_code) for c in result.components]
     report = VulnerabilityReport('blocked', result.input, result.tool_version, result.profile_database,
-                                  components=assessments, limitations=LIMITATIONS,
+                                  components=assessments, limitations=[*LIMITATIONS,
+                                      f'Advisory identity score threshold: {options.min_identity_score:g}; scores are not calibrated probabilities'],
                                   identification_coverage=result.coverage, identification_errors=result.errors)
     scanner = database = None
     try:
@@ -100,8 +102,13 @@ def correlate(result, *, options):
     try:
         for i, component in enumerate(result.components):
             coordinate = _coordinate(component)
-            if component.identity_confidence != 'high':
-                assessments[i] = replace(assessments[i], reason='Identity confidence is insufficient for automatic advisory attribution')
+            score = component.score
+            if (not isinstance(score, (int, float)) or isinstance(score, bool) or not math.isfinite(score)
+                    or not 0 <= score <= 1):
+                assessments[i] = replace(assessments[i], reason='Identity score unavailable or invalid')
+                continue
+            if score < options.min_identity_score:
+                assessments[i] = replace(assessments[i], reason=f'Identity score below {options.min_identity_score:g}')
                 continue
             if not coordinate or coordinate[0] not in database.ecosystems:
                 assessments[i] = replace(assessments[i], reason='Unsupported or unavailable package ecosystem/coordinate')

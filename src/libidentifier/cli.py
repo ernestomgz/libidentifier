@@ -17,6 +17,7 @@ from .errors import AdvisoryError, InputError, LibIdentifierError, ProfileError
 from .models import ScanResult
 from .config import IdentifyOptions
 from .serialization import write_stream
+from .table import write_table
 from .profiles.builder import build_profile, validate_database
 from .profiles.catalog import load_catalog
 from .profiles.fetcher import fetch_catalog, rebuild_database
@@ -31,30 +32,7 @@ def _write_result(result: ScanResult, args) -> None:
         else:
             write_stream(result, sys.stdout)
     else:
-        if result.components:
-            sys.stdout.write("Library\tVersion\tIdentity confidence\tScore\n")
-        for component in result.components:
-            version = component.version or "unknown"
-            if component.version is None and component.version_candidates:
-                version += " (candidates: " + ",".join(component.version_candidates)
-                version += ", ..." if component.version_candidates_truncated else ""
-                version += ")"
-            sys.stdout.write(f"{component.name}\t{version}\t{component.identity_confidence}\t{component.score}\n")
-        if not result.components:
-            sys.stdout.write("No profile-backed components identified.\n")
-        sys.stdout.write(f"Library identification: {result.coverage.library_identification}; reference coverage is limited.\n")
-        if result.coverage.unknown_classes_truncated:
-            sys.stdout.write(f"Unknown classes: {result.coverage.unknown_classes_emitted} of {result.coverage.unknown_classes_total} emitted (truncated).\n")
-        if result.frameworks_detected:
-            sys.stdout.write("Frameworks (presence indicators):\n")
-            for framework in result.frameworks_detected:
-                locations = sorted({
-                    (e.location.member or e.location.container)
-                    + (":" + e.location.class_descriptor if e.location.class_descriptor else "")
-                    for e in framework.evidence_records
-                })
-                sys.stdout.write(f"{framework.name}\t{framework.confidence}\t{', '.join(locations)}\n")
-                sys.stdout.write(f"  {'; '.join(framework.limitations)}\n")
+        write_table(result)
 
 
 def _cmd_inspect(args) -> int:
@@ -144,27 +122,9 @@ def _write_assessment(result, args):
         else:
             write_stream(result, sys.stdout)
     else:
-        report = result.vulnerabilities if hasattr(result, "identification") else result
-        if hasattr(result, "identification"):
-            _write_result(result.identification, args)
-        sys.stdout.write(f"Advisory assessment: {report.status}\n")
-        records = {a.id: a for a in report.advisories}
-        for component in report.components:
-            label = component.family_purl or component.component_id
-            sys.stdout.write(f"{label}\t{component.status}\t{component.evaluated_version or 'unknown'}\t{len(component.advisory_ids)} advisory groups\n")
-            sys.stdout.write(f"  {component.reason}\n")
-            for finding in report.findings:
-                if finding.component_id != component.component_id:
-                    continue
-                identifiers = {finding.advisory_id, *finding.related_advisory_ids}
-                for aid in finding.related_advisory_ids or [finding.advisory_id]:
-                    if aid in records:
-                        identifiers.update(records[aid].aliases)
-                status = 'confirmed version match' if finding.applicability == 'affected' else 'potential; version applicability unknown'
-                sys.stdout.write(f"  {', '.join(sorted(identifiers))} [{status}]\n")
-        for issue in report.errors:
-            sys.stdout.write(f"{issue.code}: {issue.message}\n")
-        sys.stdout.write("Advisory matches do not establish reachability or exploitability.\n")
+        inventory = result.identification if hasattr(result, 'identification') else None
+        report = result.vulnerabilities if inventory is not None else result
+        write_table(inventory, report)
 
 
 def _assessment_exit(result):
@@ -289,6 +249,8 @@ def build_parser() -> argparse.ArgumentParser:
         command.add_argument("--max-database-age-days", type=float, default=30)
         command.add_argument("--no-potential", action="store_true")
         command.add_argument("--max-potential", type=int, default=100)
+        command.add_argument("--min-identity-score", type=float, default=0.75,
+                             help="minimum component score for advisory attribution (0 to 1; default: 0.75)")
     advisories = sub.add_parser("vulnerabilities")
     actions = advisories.add_subparsers(dest="advisory_command", required=True)
     for name in ("provision", "update", "validate"):

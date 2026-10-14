@@ -84,6 +84,8 @@ API/JSON results include all parsed unmatched classes by default. Optional `--ma
 
 Scanner discovery accepts `osv-scanner` / `osv-scanner.exe` and the original Windows/Linux amd64/arm64 release filenames, so renaming is optional. Darwin binaries are unsupported; `osv-scanner_SHA256SUMS` is a checksum file. Missing-scanner warnings include the [release download page](https://github.com/google/osv-scanner/releases).
 
+Table output aligns library identity scores, unknown versions/reference candidates and advisory summaries, with a separate vulnerability section when requested. Advisory attribution requires a score of at least 0.75 by default (`--min-identity-score` configures it); categorical medium matches can qualify. Confirmed and potential findings remain distinct, and affected ranges preserve the OSV boundaries.
+
 ```sh
 libidentifier vulnerabilities update --database advisory-db --ecosystem Maven
 libidentifier vulnerabilities validate --database advisory-db

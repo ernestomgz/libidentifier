@@ -1,0 +1,37 @@
+LibIdentifier  |  ovaa-1.0.0-app-debug.apk
+════════════════════════════════════════════════════════════════
+
+LIBRARIES
+────────────────────────────────────────────────────────────────
+Library   Identity       Version                Advisories
+Gson      Medium (0.73)  Unknown [2.11.0]       Not assessed
+OkHttp    High   (0.92)  Unknown [4.9.0,4.9.3]  2 potential
+Retrofit  Medium (0.84)  Unknown [2.9.0]        2 potential
+Coverage: limited reference profiles.
+
+VULNERABILITIES
+────────────────────────────────────────────────────────────────
+Advisory assessment: partial
+Gson — Not assessed (identity score below 0.75)
+
+OkHttp — 2 potential advisories
+  CVE-2021-0341       POTENTIAL  Affected: before 4.9.2 OR 74
+  explicitly listed versions (see JSON)
+    Aliases: A-171980069, ASB-A-171980069, GHSA-3cqm-mf7h-prrj
+  CVE-2016-2402       POTENTIAL  Affected: before 2.7.4 OR 3.0.0
+  inclusive to 3.1.2 exclusive OR listed versions: 3.0.0, 3.0.1,
+  3.1.0, 3.1.1
+    Aliases: GHSA-4hc2-jh7r-wrc3
+  Installed version unknown; applicability not confirmed.
+
+Retrofit — 2 potential advisories
+  CVE-2018-1000850    POTENTIAL  Affected: 2.0.0 inclusive to
+  2.5.0 exclusive OR 7 explicitly listed versions (see JSON)
+    Aliases: GHSA-8p8g-f9vg-r7xr
+  CVE-2018-1000844    POTENTIAL  Affected: 2.0.0 inclusive to
+  2.5.0 exclusive OR 7 explicitly listed versions (see JSON)
+    Aliases: GHSA-j379-9jr9-w5cq
+  Installed version unknown; applicability not confirmed.
+
+Advisory matches do not establish reachability or
+exploitability.
