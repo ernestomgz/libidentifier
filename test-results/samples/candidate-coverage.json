@@ -1,0 +1,277 @@
+[
+  {
+    "apk": "allsafe-1.6.apk",
+    "candidate_coverage": [
+      {
+        "matched_classes": 6,
+        "name": "rootbeer-lib",
+        "profile_classes": 6,
+        "raw_coverage": 1.0,
+        "version": "0.0.8"
+      },
+      {
+        "matched_classes": 323,
+        "name": "okhttp",
+        "profile_classes": 326,
+        "raw_coverage": 0.990798,
+        "version": "4.9.0"
+      },
+      {
+        "matched_classes": 321,
+        "name": "okhttp",
+        "profile_classes": 326,
+        "raw_coverage": 0.984663,
+        "version": "4.9.3"
+      },
+      {
+        "matched_classes": 127,
+        "name": "gson",
+        "profile_classes": 226,
+        "raw_coverage": 0.561947,
+        "version": "2.11.0"
+      },
+      {
+        "matched_classes": 30,
+        "name": "retrofit",
+        "profile_classes": 111,
+        "raw_coverage": 0.27027,
+        "version": "2.9.0"
+      },
+      {
+        "matched_classes": 1,
+        "name": "converter-gson",
+        "profile_classes": 4,
+        "raw_coverage": 0.25,
+        "version": "2.9.0"
+      },
+      {
+        "matched_classes": 93,
+        "name": "commons-io",
+        "profile_classes": 716,
+        "raw_coverage": 0.129888,
+        "version": "2.16.1"
+      }
+    ]
+  },
+  {
+    "apk": "AndroGoat-2.0.1.apk",
+    "candidate_coverage": [
+      {
+        "matched_classes": 323,
+        "name": "okhttp",
+        "profile_classes": 326,
+        "raw_coverage": 0.990798,
+        "version": "4.9.3"
+      },
+      {
+        "matched_classes": 321,
+        "name": "okhttp",
+        "profile_classes": 326,
+        "raw_coverage": 0.984663,
+        "version": "4.9.0"
+      },
+      {
+        "matched_classes": 29,
+        "name": "retrofit",
+        "profile_classes": 111,
+        "raw_coverage": 0.261261,
+        "version": "2.9.0"
+      },
+      {
+        "matched_classes": 1,
+        "name": "converter-gson",
+        "profile_classes": 4,
+        "raw_coverage": 0.25,
+        "version": "2.9.0"
+      },
+      {
+        "matched_classes": 53,
+        "name": "commons-io",
+        "profile_classes": 716,
+        "raw_coverage": 0.074022,
+        "version": "2.16.1"
+      },
+      {
+        "matched_classes": 15,
+        "name": "gson",
+        "profile_classes": 226,
+        "raw_coverage": 0.066372,
+        "version": "2.11.0"
+      }
+    ]
+  },
+  {
+    "apk": "diva.apk",
+    "candidate_coverage": [
+      {
+        "matched_classes": 28,
+        "name": "retrofit",
+        "profile_classes": 111,
+        "raw_coverage": 0.252252,
+        "version": "2.9.0"
+      },
+      {
+        "matched_classes": 1,
+        "name": "converter-gson",
+        "profile_classes": 4,
+        "raw_coverage": 0.25,
+        "version": "2.9.0"
+      },
+      {
+        "matched_classes": 14,
+        "name": "gson",
+        "profile_classes": 226,
+        "raw_coverage": 0.061947,
+        "version": "2.11.0"
+      },
+      {
+        "matched_classes": 44,
+        "name": "commons-io",
+        "profile_classes": 716,
+        "raw_coverage": 0.061453,
+        "version": "2.16.1"
+      },
+      {
+        "matched_classes": 18,
+        "name": "okhttp",
+        "profile_classes": 326,
+        "raw_coverage": 0.055215,
+        "version": "4.9.0"
+      },
+      {
+        "matched_classes": 18,
+        "name": "okhttp",
+        "profile_classes": 326,
+        "raw_coverage": 0.055215,
+        "version": "4.9.3"
+      }
+    ]
+  },
+  {
+    "apk": "InjuredAndroid-1.0.12-release.apk",
+    "candidate_coverage": [
+      {
+        "matched_classes": 7,
+        "name": "retrofit",
+        "profile_classes": 111,
+        "raw_coverage": 0.063063,
+        "version": "2.9.0"
+      },
+      {
+        "matched_classes": 13,
+        "name": "gson",
+        "profile_classes": 226,
+        "raw_coverage": 0.057522,
+        "version": "2.11.0"
+      },
+      {
+        "matched_classes": 27,
+        "name": "commons-io",
+        "profile_classes": 716,
+        "raw_coverage": 0.037709,
+        "version": "2.16.1"
+      },
+      {
+        "matched_classes": 3,
+        "name": "okhttp",
+        "profile_classes": 326,
+        "raw_coverage": 0.009202,
+        "version": "4.9.0"
+      },
+      {
+        "matched_classes": 3,
+        "name": "okhttp",
+        "profile_classes": 326,
+        "raw_coverage": 0.009202,
+        "version": "4.9.3"
+      }
+    ]
+  },
+  {
+    "apk": "InsecureBankv2-2.3.1.apk",
+    "candidate_coverage": [
+      {
+        "matched_classes": 13,
+        "name": "retrofit",
+        "profile_classes": 111,
+        "raw_coverage": 0.117117,
+        "version": "2.9.0"
+      },
+      {
+        "matched_classes": 12,
+        "name": "gson",
+        "profile_classes": 226,
+        "raw_coverage": 0.053097,
+        "version": "2.11.0"
+      },
+      {
+        "matched_classes": 24,
+        "name": "commons-io",
+        "profile_classes": 716,
+        "raw_coverage": 0.03352,
+        "version": "2.16.1"
+      },
+      {
+        "matched_classes": 4,
+        "name": "okhttp",
+        "profile_classes": 326,
+        "raw_coverage": 0.01227,
+        "version": "4.9.0"
+      },
+      {
+        "matched_classes": 4,
+        "name": "okhttp",
+        "profile_classes": 326,
+        "raw_coverage": 0.01227,
+        "version": "4.9.3"
+      }
+    ]
+  },
+  {
+    "apk": "ovaa-1.0.0-app-debug.apk",
+    "candidate_coverage": [
+      {
+        "matched_classes": 275,
+        "name": "okhttp",
+        "profile_classes": 326,
+        "raw_coverage": 0.843558,
+        "version": "4.9.3"
+      },
+      {
+        "matched_classes": 274,
+        "name": "okhttp",
+        "profile_classes": 326,
+        "raw_coverage": 0.840491,
+        "version": "4.9.0"
+      },
+      {
+        "matched_classes": 85,
+        "name": "retrofit",
+        "profile_classes": 111,
+        "raw_coverage": 0.765766,
+        "version": "2.9.0"
+      },
+      {
+        "matched_classes": 169,
+        "name": "gson",
+        "profile_classes": 226,
+        "raw_coverage": 0.747788,
+        "version": "2.11.0"
+      },
+      {
+        "matched_classes": 2,
+        "name": "converter-gson",
+        "profile_classes": 4,
+        "raw_coverage": 0.5,
+        "version": "2.9.0"
+      },
+      {
+        "matched_classes": 320,
+        "name": "commons-io",
+        "profile_classes": 716,
+        "raw_coverage": 0.446927,
+        "version": "2.16.1"
+      }
+    ]
+  }
+]

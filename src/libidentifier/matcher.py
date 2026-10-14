@@ -12,7 +12,7 @@ from .extractors.dex import ClassFeature
 from .extractors.elf import ElfFeature
 from .fingerprint.dex_v1 import digest_class, is_trivial_shape
 from .models import CodeLocator, CodeOwnerHint, ComponentMatch
-from .profiles.store import release_rows
+from .profiles.store import dex_class_rows, release_rows
 
 
 def _component_id(name: str, family_id: str, input_sha: str) -> str:
@@ -28,11 +28,13 @@ def _dex_matches(
 ) -> tuple[list[ComponentMatch], list[CodeOwnerHint], set[tuple[str | None, str | None]]]:
     observed = Counter()
     locators: dict[str, list[CodeLocator]] = defaultdict(list)
+    observed_descriptors: dict[str, Counter[str]] = defaultdict(Counter)
     discriminative_observed: set[str] = set()
     for feature in classes:
         digest = digest_class(feature)
         observed[digest] += 1
         locators[digest].append(feature.locator)
+        observed_descriptors[digest][feature.descriptor] += 1
         if not is_trivial_shape(feature):
             discriminative_observed.add(digest)
     if not observed:
@@ -74,11 +76,29 @@ def _dex_matches(
             weights.get(d, 1.0) * count
             for d, count in conn.execute("SELECT digest, multiplicity FROM dex_shape WHERE release_id=?", (rid,))
         )
+    profile_class_totals = {
+        rid: sum(
+            count
+            for _digest, count in conn.execute("SELECT digest, multiplicity FROM dex_shape WHERE release_id=?", (rid,))
+        )
+        for rid in reference_counts
+    }
 
     candidates = []
     for rid, counts in reference_counts.items():
-        matched = sum(min(observed[d], c) for d, c in counts.items())
-        weighted = sum(weights.get(d, 1.0) * min(observed[d], c) for d, c in counts.items())
+        structural_matched = sum(min(observed[d], c) for d, c in counts.items())
+        structural_weighted = sum(weights.get(d, 1.0) * min(observed[d], c) for d, c in counts.items())
+        reference_descriptors = dex_class_rows(conn, rid, set(counts))
+        exact_matched = 0
+        exact_weighted = 0.0
+        for digest, descriptor_counts in reference_descriptors.items():
+            for descriptor, ref_count in descriptor_counts.items():
+                count = min(observed_descriptors[digest][descriptor], ref_count)
+                exact_matched += count
+                exact_weighted += weights.get(digest, 1.0) * count
+        matched = exact_matched or structural_matched
+        weighted = exact_weighted or structural_weighted
+        match_mode = "exact_descriptor" if exact_matched else "structural_shape"
         total = totals.get(rid) or 1.0
         discriminative = sum(min(observed[d], c) for d, c in counts.items() if d in discriminative_observed)
         unique_anchors = sum(1 for d in counts if d in discriminative_observed and digest_family_counts.get(d, 99) <= 1)
@@ -88,11 +108,16 @@ def _dex_matches(
                 "family_id": releases[rid]["family_id"],
                 "coverage": weighted / total,
                 "matched": matched,
-                "profile_classes": sum(counts.values()),
+                "structural_matched": structural_matched,
+                "exact_descriptor_matches": exact_matched,
+                "profile_classes": profile_class_totals.get(rid, sum(counts.values())),
                 "discriminative": discriminative,
                 "unique_anchors": unique_anchors,
                 "digests": set(counts),
                 "counts": counts,
+                "reference_descriptors": reference_descriptors,
+                "match_mode": match_mode,
+                "weighted_total": total,
             }
         )
 
@@ -109,19 +134,36 @@ def _dex_matches(
     hints: list[CodeOwnerHint] = []
     assigned: set[tuple[str | None, str | None]] = set()
     for index, cand in enumerate(family_best):
-        runner = max(
-            (
-                c["coverage"]
-                for j, c in enumerate(family_best)
-                if j != index and cand["digests"].intersection(c["digests"])
-            ),
-            default=0.0,
-        )
+        runner = 0.0
+        for j, other in enumerate(family_best):
+            if j == index:
+                continue
+            overlap = cand["digests"].intersection(other["digests"])
+            if not overlap:
+                continue
+            overlap_weight = sum(
+                weights.get(d, 1.0) * min(cand["counts"].get(d, 0), other["counts"].get(d, 0))
+                for d in overlap
+            )
+            material_overlap = overlap_weight / max(min(cand["weighted_total"], other["weighted_total"]), 1.0)
+            if material_overlap >= options.min_material_runner_overlap:
+                runner = max(runner, other["coverage"])
         runner_delta = cand["coverage"] - runner
         if cand["discriminative"] >= options.high_min_discriminative_classes and cand["coverage"] >= options.high_min_weighted_coverage and cand["unique_anchors"] >= options.high_min_unique_anchors and runner_delta >= options.high_min_runner_up_delta:
             confidence = "high"
+            partial_match = False
         elif cand["discriminative"] >= options.medium_min_discriminative_classes and cand["coverage"] >= options.medium_min_weighted_coverage and runner_delta >= 0:
             confidence = "medium"
+            partial_match = False
+        elif (
+            cand["match_mode"] == "exact_descriptor"
+            and cand["exact_descriptor_matches"] >= options.medium_partial_min_exact_classes
+            and cand["coverage"] >= options.medium_partial_min_weighted_coverage
+            and cand["unique_anchors"] >= options.medium_partial_min_unique_anchors
+            and runner_delta >= 0
+        ):
+            confidence = "medium"
+            partial_match = True
         else:
             continue
         family_releases = sorted(by_family[cand["family_id"]], key=lambda c: (-c["coverage"], c["release_id"]))
@@ -137,12 +179,24 @@ def _dex_matches(
         matched_locs = []
         for digest in sorted(cand["digests"]):
             remaining = cand["counts"][digest]
-            for locator in locators[digest]:
+            descriptor_counts = Counter(cand["reference_descriptors"].get(digest, {}))
+            exact_locators = [
+                locator
+                for locator in locators[digest]
+                if locator.class_descriptor in descriptor_counts and descriptor_counts[locator.class_descriptor] > 0
+            ]
+            if cand["exact_descriptor_matches"]:
+                locator_pool = exact_locators
+            else:
+                locator_pool = locators[digest]
+            for locator in locator_pool:
                 if remaining <= 0:
                     break
                 key = (locator.member, locator.class_descriptor)
                 if key not in assigned:
                     matched_locs.append(locator)
+                    if locator.class_descriptor in descriptor_counts:
+                        descriptor_counts[locator.class_descriptor] -= 1
                     remaining -= 1
         if not matched_locs:
             continue
@@ -175,13 +229,25 @@ def _dex_matches(
                 score_details={
                     "matched_classes": cand["matched"],
                     "profile_classes": cand["profile_classes"],
+                    "exact_descriptor_matches": cand["exact_descriptor_matches"],
+                    "structural_matched_classes": cand["structural_matched"],
+                    "match_mode": cand["match_mode"],
+                    "partial_match": partial_match,
                     "weighted_coverage": round(cand["coverage"], 6),
                     "unique_anchors": cand["unique_anchors"],
                     "runner_up_delta": round(runner_delta, 6),
                 },
                 matched_code=sorted(matched_locs, key=lambda x: (x.member or "", x.class_descriptor or "")),
                 source_artifacts=sorted({x.member or x.container for x in matched_locs}),
-                limitations=[] if version else ["release version cannot be distinguished from structural fingerprints alone"],
+                limitations=(
+                    ([] if version else ["release version cannot be distinguished from structural fingerprints alone"])
+                    + (["partial library match; not all reference classes were observed"] if partial_match else [])
+                    + (
+                        ["matched code is assigned by structural shape because reference descriptors were not observed"]
+                        if cand["match_mode"] == "structural_shape"
+                        else []
+                    )
+                ),
             )
         )
     return components, hints, assigned

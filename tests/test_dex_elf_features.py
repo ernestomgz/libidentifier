@@ -16,6 +16,29 @@ def test_lief_extracts_real_dex_classes():
     assert classes[0].fields
 
 
+def test_dex_extraction_excludes_reference_only_types():
+    dex = make_dex(
+        [
+            {
+                "descriptor": "Lsample/lib/UsesPlatform;",
+                "fields": [{"name": "bundle", "type": "Landroid/os/Bundle;"}],
+                "methods": [
+                    {
+                        "name": "read",
+                        "return": "Ljava/lang/String;",
+                        "params": ["Ljava/io/InputStream;"],
+                    }
+                ],
+            }
+        ]
+    )
+    classes = parse_dex(dex, container="fixture.dex", member=None, sha256="x")
+    assert [c.descriptor for c in classes] == ["Lsample/lib/UsesPlatform;"]
+    assert "Landroid/os/Bundle;" not in {c.descriptor for c in classes}
+    assert "Ljava/io/InputStream;" not in {c.descriptor for c in classes}
+    assert "Ljava/lang/String;" not in {c.descriptor for c in classes}
+
+
 def test_dex_shape_is_rename_invariant_and_shape_sensitive():
     a = parse_dex(make_dex(lib_classes("first/name", 1)), container="a", member=None, sha256="a")[0]
     b = parse_dex(make_dex(lib_classes("second/name", 1)), container="b", member=None, sha256="b")[0]

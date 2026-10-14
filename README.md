@@ -12,6 +12,8 @@ python -m pip install -e .
 
 The project targets Python 3.11+ and pins `lief==0.17.1`.
 
+For setup, profile database creation and first scans, see [docs/quickstart.md](docs/quickstart.md).
+
 ## CLI
 
 ```powershell

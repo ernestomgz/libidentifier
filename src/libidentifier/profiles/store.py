@@ -88,6 +88,7 @@ def upsert_release(
     source_format: str,
     provenance: dict,
     dex_shapes: Counter[str] | None = None,
+    dex_classes: Counter[tuple[str, str]] | None = None,
     elf_identity: dict | None = None,
 ) -> tuple[str, str, str]:
     family_id, name, package_name, version = family_id_from_purl(purl)
@@ -126,6 +127,12 @@ def upsert_release(
                     "INSERT OR REPLACE INTO dex_shape(release_id, digest, multiplicity) VALUES (?, ?, ?)",
                     (rid, digest, int(count)),
                 )
+        if dex_classes:
+            for (digest, descriptor), count in sorted(dex_classes.items()):
+                conn.execute(
+                    "INSERT OR REPLACE INTO dex_class(release_id, digest, descriptor, multiplicity) VALUES (?, ?, ?, ?)",
+                    (rid, digest, descriptor, int(count)),
+                )
         if elf_identity:
             conn.execute(
                 """
@@ -145,6 +152,23 @@ def upsert_release(
             "INSERT OR REPLACE INTO db_meta(key, value) VALUES ('generated_at', datetime('now'))"
         )
     return rid, family_id, version
+
+
+def dex_class_rows(conn: sqlite3.Connection, release_id: str, digests: set[str]) -> dict[str, Counter[str]]:
+    if not digests:
+        return {}
+    placeholders = ",".join("?" for _ in digests)
+    rows: dict[str, Counter[str]] = {}
+    for digest, descriptor, multiplicity in conn.execute(
+        f"""
+        SELECT digest, descriptor, multiplicity
+        FROM dex_class
+        WHERE release_id=? AND digest IN ({placeholders})
+        """,
+        (release_id, *tuple(sorted(digests))),
+    ):
+        rows.setdefault(digest, Counter())[descriptor] += int(multiplicity)
+    return rows
 
 
 def release_rows(conn: sqlite3.Connection, release_ids: set[str]) -> dict[str, dict]:

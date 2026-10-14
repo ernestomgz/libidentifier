@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+import sqlite3
+
+import pytest
+
 from libidentifier.api import build_profile, identify, inspect
+from libidentifier.errors import ProfileError
 from libidentifier.profiles.builder import validate_database
 
 from conftest import lib_classes, make_apk, make_dex, make_minimal_elf
@@ -20,6 +25,40 @@ def test_profile_build_validate_and_identify_two_libraries(tmp_path, demo_db):
     assert all(c.version is None and c.version_confidence == "unknown" for c in result.components)
     assert len(result.unknown_classes) == 2
     assert {u.class_descriptor for u in result.unknown_classes} == {"Lzzz/app/Class0;", "Lzzz/app/Class1;"}
+
+
+def test_tiny_shape_overlap_does_not_suppress_distinct_libraries(tmp_path):
+    db = tmp_path / "profiles.sqlite"
+    shared_a = lib_classes("lib/a/shared", 1)
+    shared_b = [{"descriptor": "Llib/b/shared/Class0;", "fields": shared_a[0]["fields"], "methods": shared_a[0]["methods"]}]
+    ref_a_classes = shared_a + lib_classes("lib/a/unique", 5)
+    ref_b_classes = shared_b + lib_classes("lib/b/unique", 5, "Ljava/lang/Object;")
+    ref_a = tmp_path / "a.dex"
+    ref_b = tmp_path / "b.dex"
+    ref_a.write_bytes(make_dex(ref_a_classes))
+    ref_b.write_bytes(make_dex(ref_b_classes))
+    build_profile(ref_a, purl="pkg:maven/example/liba@1.0.0", database=db)
+    build_profile(ref_b, purl="pkg:maven/example/libb@1.0.0", database=db)
+    apk = make_apk(tmp_path / "overlap.apk", {"classes.dex": make_dex(ref_a_classes + ref_b_classes)})
+
+    result = identify(apk, profiles=db)
+
+    assert [c.name for c in result.components] == ["liba", "libb"]
+    assert all(c.identity_confidence == "high" for c in result.components)
+
+
+def test_incompatible_fingerprint_database_is_rejected(demo_db):
+    conn = sqlite3.connect(demo_db)
+    try:
+        conn.execute(
+            "UPDATE db_meta SET value=? WHERE key='fingerprint_algorithm'",
+            ("dex-shape-v1+elf-identity-v1",),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    with pytest.raises(ProfileError):
+        validate_database(demo_db)
 
 
 def test_multidex_library_spanning_two_dex_files(tmp_path):

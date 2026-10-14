@@ -9,4 +9,7 @@ tmp_run/
 dist/
 build/
 samples/
+test-results/d8-wrapper.cmd
+test-results/reference-artifacts/
+test-results/tmp/
 

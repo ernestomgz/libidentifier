@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import struct
 from dataclasses import dataclass
 from typing import Any
 
@@ -70,9 +71,87 @@ def _method_proto(method: Any) -> tuple[str, tuple[str, ...]]:
     return return_type, tuple(_type_descriptor(p) for p in params)
 
 
+def _read_uleb128(data: bytes, offset: int) -> tuple[int, int]:
+    result = 0
+    shift = 0
+    pos = offset
+    for _ in range(5):
+        if pos >= len(data):
+            raise ValueError("DEX string data is truncated")
+        byte = data[pos]
+        pos += 1
+        result |= (byte & 0x7F) << shift
+        if not byte & 0x80:
+            return result, pos
+        shift += 7
+    raise ValueError("DEX ULEB128 value is too large")
+
+
+def _cstring(data: bytes, offset: int) -> str:
+    _utf16_size, pos = _read_uleb128(data, offset)
+    try:
+        end = data.index(0, pos)
+    except ValueError as exc:
+        raise ValueError("DEX string data is not NUL-terminated") from exc
+    return data[pos:end].decode("utf-8", errors="replace")
+
+
+def _class_definition_descriptors(data: bytes) -> set[str]:
+    if len(data) < 0x70:
+        raise ValueError("DEX header is truncated")
+    if not data.startswith(b"dex\n"):
+        raise ValueError("DEX magic is invalid")
+    endian_tag = struct.unpack_from("<I", data, 0x28)[0]
+    if endian_tag != 0x12345678:
+        raise ValueError("DEX reverse-endian files are not supported")
+    file_size = struct.unpack_from("<I", data, 0x20)[0]
+    if file_size > len(data):
+        raise ValueError("DEX file size exceeds available data")
+
+    string_ids_size, string_ids_off = struct.unpack_from("<II", data, 0x38)
+    type_ids_size, type_ids_off = struct.unpack_from("<II", data, 0x40)
+    class_defs_size, class_defs_off = struct.unpack_from("<II", data, 0x60)
+
+    def require_table(offset: int, item_size: int, count: int, name: str) -> None:
+        if count == 0:
+            return
+        if offset == 0:
+            raise ValueError(f"DEX {name} offset is missing")
+        end = offset + item_size * count
+        if offset < 0 or end > len(data) or end < offset:
+            raise ValueError(f"DEX {name} table is out of bounds")
+
+    require_table(string_ids_off, 4, string_ids_size, "string_ids")
+    require_table(type_ids_off, 4, type_ids_size, "type_ids")
+    require_table(class_defs_off, 32, class_defs_size, "class_defs")
+
+    strings: list[str] = []
+    for i in range(string_ids_size):
+        string_off = struct.unpack_from("<I", data, string_ids_off + 4 * i)[0]
+        if string_off >= len(data):
+            raise ValueError("DEX string offset is out of bounds")
+        strings.append(_cstring(data, string_off))
+
+    types: list[str] = []
+    for i in range(type_ids_size):
+        descriptor_idx = struct.unpack_from("<I", data, type_ids_off + 4 * i)[0]
+        if descriptor_idx >= len(strings):
+            raise ValueError("DEX type descriptor index is out of bounds")
+        types.append(strings[descriptor_idx])
+
+    descriptors: set[str] = set()
+    for i in range(class_defs_size):
+        class_idx = struct.unpack_from("<I", data, class_defs_off + 32 * i)[0]
+        if class_idx >= len(types):
+            raise ValueError("DEX class definition index is out of bounds")
+        descriptors.add(types[class_idx])
+    return descriptors
+
+
 def parse_dex(data: bytes, *, container: str, member: str | None, sha256: str) -> list[ClassFeature]:
     import lief
 
+    defined_descriptors = _class_definition_descriptors(data)
     try:
         parsed = lief.DEX.parse(list(data), name=member or container)
     except TypeError:
@@ -85,6 +164,8 @@ def parse_dex(data: bytes, *, container: str, member: str | None, sha256: str) -
         if not descriptor.startswith("L") and "/" not in descriptor:
             fullname = getattr(cls, "fullname", None)
             descriptor = fullname if isinstance(fullname, str) else descriptor
+        if descriptor not in defined_descriptors:
+            continue
         superclass = _type_descriptor(getattr(cls, "parent", None)) if getattr(cls, "parent", None) else None
         interfaces = tuple(sorted(_type_descriptor(i) for i in (getattr(cls, "interfaces", []) or [])))
         fields = []

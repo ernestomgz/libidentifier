@@ -36,6 +36,14 @@ CREATE TABLE IF NOT EXISTS dex_shape (
   PRIMARY KEY (release_id, digest)
 );
 CREATE INDEX IF NOT EXISTS idx_dex_shape_digest ON dex_shape(digest);
+CREATE TABLE IF NOT EXISTS dex_class (
+  release_id TEXT NOT NULL REFERENCES library_release(release_id),
+  digest TEXT NOT NULL,
+  descriptor TEXT NOT NULL,
+  multiplicity INTEGER NOT NULL CHECK(multiplicity > 0),
+  PRIMARY KEY (release_id, digest, descriptor)
+);
+CREATE INDEX IF NOT EXISTS idx_dex_class_digest ON dex_class(digest);
 CREATE TABLE IF NOT EXISTS elf_identity (
   release_id TEXT NOT NULL REFERENCES library_release(release_id),
   abi TEXT NOT NULL,
@@ -72,6 +80,7 @@ def validate(conn: sqlite3.Connection) -> None:
         "library_family",
         "library_release",
         "dex_shape",
+        "dex_class",
         "elf_identity",
     }
     actual = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}

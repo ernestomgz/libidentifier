@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -11,6 +12,8 @@ from .api import identify, inspect
 from .errors import InputError, LibIdentifierError, ProfileError
 from .models import ScanResult
 from .profiles.builder import build_profile, validate_database
+from .profiles.catalog import load_catalog
+from .profiles.fetcher import fetch_catalog, rebuild_database
 from .sbom import export_cyclonedx
 from .version import __version__
 
@@ -37,7 +40,13 @@ def _cmd_inspect(args) -> int:
 
 
 def _cmd_identify(args) -> int:
-    result = identify(args.path, profiles=args.profiles)
+    profiles = args.profiles or os.environ.get("LIBIDENTIFIER_PROFILES")
+    if not profiles:
+        raise ProfileError(
+            "no profile database specified; pass --profiles, set LIBIDENTIFIER_PROFILES, "
+            "or build one with 'libidentifier profiles rebuild'"
+        )
+    result = identify(args.path, profiles=profiles)
     _write_result(result, args)
     return 4 if any(e.severity == "error" for e in result.errors) else 0
 
@@ -61,6 +70,26 @@ def _cmd_profiles_validate(args) -> int:
     return 0
 
 
+def _cmd_profiles_fetch(args) -> int:
+    catalog = load_catalog(args.catalog)
+    rows = fetch_catalog(catalog, args.cache, offline=args.offline)
+    sys.stdout.write(json.dumps(rows, sort_keys=True, separators=(",", ":")) + "\n")
+    return 0
+
+
+def _cmd_profiles_rebuild(args) -> int:
+    rows = rebuild_database(
+        args.catalog,
+        cache_dir=args.cache,
+        database=args.database,
+        d8=args.d8,
+        android_jar=args.android_jar,
+        offline=args.offline,
+    )
+    sys.stdout.write(json.dumps(rows, sort_keys=True, separators=(",", ":")) + "\n")
+    return 0
+
+
 def _cmd_sbom(args) -> int:
     data = json.loads(Path(args.input).read_text(encoding="utf-8"))
     export_cyclonedx(ScanResult.from_dict(data), args.output)
@@ -80,7 +109,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     identify_p = sub.add_parser("identify")
     identify_p.add_argument("path")
-    identify_p.add_argument("--profiles", required=True)
+    identify_p.add_argument("--profiles")
     identify_p.add_argument("--format", choices=["json", "table"], default="json")
     identify_p.add_argument("--output")
     identify_p.set_defaults(func=_cmd_identify)
@@ -98,6 +127,19 @@ def build_parser() -> argparse.ArgumentParser:
     validate_p = profiles_sub.add_parser("validate")
     validate_p.add_argument("database")
     validate_p.set_defaults(func=_cmd_profiles_validate)
+    fetch_p = profiles_sub.add_parser("fetch")
+    fetch_p.add_argument("--catalog", default="catalog/references.json")
+    fetch_p.add_argument("--cache", default="reference-artifacts")
+    fetch_p.add_argument("--offline", action="store_true")
+    fetch_p.set_defaults(func=_cmd_profiles_fetch)
+    rebuild_p = profiles_sub.add_parser("rebuild")
+    rebuild_p.add_argument("--catalog", default="catalog/references.json")
+    rebuild_p.add_argument("--cache", default="reference-artifacts")
+    rebuild_p.add_argument("--database", required=True)
+    rebuild_p.add_argument("--d8")
+    rebuild_p.add_argument("--android-jar")
+    rebuild_p.add_argument("--offline", action="store_true")
+    rebuild_p.set_defaults(func=_cmd_profiles_rebuild)
 
     sbom_p = sub.add_parser("sbom")
     sbom_p.add_argument("input")

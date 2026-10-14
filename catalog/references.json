@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "fingerprint_algorithm": "dex-shape-v1-defs+elf-identity-v1",
+  "references": [
+    {
+      "purl": "pkg:maven/com.google.code.gson/gson@2.11.0",
+      "repository": "maven-central",
+      "url": "https://repo.maven.apache.org/maven2/com/google/code/gson/gson/2.11.0/gson-2.11.0.jar",
+      "sha256": "57928d6e5a6edeb2abd3770a8f95ba44dce45f3b23b7a9dc2b309c581552a78b",
+      "license": "Apache-2.0"
+    },
+    {
+      "purl": "pkg:maven/commons-io/commons-io@2.16.1",
+      "repository": "maven-central",
+      "url": "https://repo.maven.apache.org/maven2/commons-io/commons-io/2.16.1/commons-io-2.16.1.jar",
+      "sha256": "f41f7baacd716896447ace9758621f62c1c6b0a91d89acee488da26fc477c84f",
+      "license": "Apache-2.0"
+    },
+    {
+      "purl": "pkg:maven/com.squareup.retrofit2/retrofit@2.9.0",
+      "repository": "maven-central",
+      "url": "https://repo.maven.apache.org/maven2/com/squareup/retrofit2/retrofit/2.9.0/retrofit-2.9.0.jar",
+      "sha256": "e6ea1929c46852f5bec66ab3357da383476cef4e8d1deefdbf195b79cc4d6581",
+      "license": "Apache-2.0"
+    },
+    {
+      "purl": "pkg:maven/com.squareup.retrofit2/converter-gson@2.9.0",
+      "repository": "maven-central",
+      "url": "https://repo.maven.apache.org/maven2/com/squareup/retrofit2/converter-gson/2.9.0/converter-gson-2.9.0.jar",
+      "sha256": "32aa206b9a29c9df5eda93a092cfb3b0b9133e232c062baa882f0319f0e79f0e",
+      "license": "Apache-2.0"
+    },
+    {
+      "purl": "pkg:maven/com.squareup.okhttp3/okhttp@4.9.0",
+      "repository": "maven-central",
+      "url": "https://repo.maven.apache.org/maven2/com/squareup/okhttp3/okhttp/4.9.0/okhttp-4.9.0.jar",
+      "sha256": "dbc2bb04ecb002b9f4046263ccad996f4a3d3c59a0cc98837e300a6700571f7c",
+      "license": "Apache-2.0"
+    },
+    {
+      "purl": "pkg:maven/com.squareup.okhttp3/okhttp@4.9.3",
+      "repository": "maven-central",
+      "url": "https://repo.maven.apache.org/maven2/com/squareup/okhttp3/okhttp/4.9.3/okhttp-4.9.3.jar",
+      "sha256": "93ecd6cba19d87dccfe566ec848d91aae799e3cf16c00709358ea69bd9227219",
+      "license": "Apache-2.0"
+    },
+    {
+      "purl": "pkg:maven/com.scottyab/rootbeer-lib@0.0.8",
+      "repository": "maven-central",
+      "url": "https://repo.maven.apache.org/maven2/com/scottyab/rootbeer-lib/0.0.8/rootbeer-lib-0.0.8.aar",
+      "sha256": "4750bedff6605ed4ca96e2dd9b13fd6216ba55eb7abf914cbd9f9f00566ad82a",
+      "license": "Apache-2.0"
+    }
+  ]
+}

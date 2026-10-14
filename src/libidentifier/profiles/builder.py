@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import tempfile
 import zipfile
+from collections import Counter
 from pathlib import Path
 
 from ..archive import read_selected_members
@@ -16,6 +17,7 @@ from ..errors import ProfileBuildError
 from ..extractors.dex import parse_dex
 from ..extractors.elf import parse_elf
 from ..fingerprint.dex_v1 import digest_counts
+from ..fingerprint.dex_v1 import digest_class
 from ..fingerprint.elf_v1 import identity_record
 from ..models import ProfileBuildResult
 from .store import connect_write, sha256_file, upsert_release
@@ -72,6 +74,7 @@ def build_profile(
     fmt = detect_file(ref)
     data = ref.read_bytes()
     dex_shapes = None
+    dex_class_descriptors = None
     elf_identity = None
     source_format = fmt
     temp_jar: Path | None = None
@@ -79,6 +82,7 @@ def build_profile(
         if fmt == "dex":
             features = parse_dex(data, container=str(ref), member=None, sha256=source_sha)
             dex_shapes = digest_counts(features)
+            dex_class_descriptors = Counter((digest_class(f), f.descriptor) for f in features)
             if not dex_shapes:
                 raise ProfileBuildError("reference DEX contains no class shapes")
         elif fmt == "elf":
@@ -93,6 +97,7 @@ def build_profile(
             dex = _run_d8(build_input, Path(d8), Path(android_jar) if android_jar else None)
             features = parse_dex(dex, container=str(ref), member="classes.dex", sha256=hashlib.sha256(dex).hexdigest())
             dex_shapes = digest_counts(features)
+            dex_class_descriptors = Counter((digest_class(f), f.descriptor) for f in features)
             if not dex_shapes:
                 raise ProfileBuildError("D8 output contains no class shapes")
             source_format = fmt
@@ -112,6 +117,7 @@ def build_profile(
             source_format=source_format,
             provenance=provenance,
             dex_shapes=dex_shapes,
+            dex_classes=dex_class_descriptors,
             elf_identity=elf_identity,
         )
     finally:
