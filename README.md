@@ -68,7 +68,7 @@ Structural DEX matches normally identify the library family only. Exact versions
 
 ## Limitations
 
-- Optional Maven advisory assessment requires an approved OSV-Scanner v2.7.0 executable and a provisioned local snapshot. It does not establish reachability or exploitability.
+- Optional Maven advisory assessment requires a trusted, compatible OSV-Scanner v2 executable and a provisioned local snapshot. GitHub and package-manager installations are supported; v2.6.0 and v2.7.0 are tested. It does not establish reachability or exploitability.
 - No JavaScript, Hermes, Dart AOT, Flutter package, or npm dependency identification.
 - DEX matching is conservative and shape-based; aggressive R8/ProGuard transformations may reduce confidence or prevent matches.
 - Stage 1 thresholds are configurable starting points, not calibrated accuracy claims.
@@ -95,4 +95,4 @@ libidentifier scan app.apk --profiles profiles.sqlite --vulnerabilities --osv-sc
 libidentifier correlate inventory.json --osv-scanner /opt/tools/osv-scanner --osv-db advisory-db --format table
 ```
 
-Install the matching native executable from [the official v2.7.0 release](https://github.com/google/osv-scanner/releases/tag/v2.7.0) on PATH or in the working directory; `--osv-scanner` preserves explicit selection. The CLI selects `./advisory-db`, then the user cache, or an explicit `--osv-db`. A missing database is provisioned automatically unless `--offline` is set; existing stale/corrupt databases require explicit `update`. Missing scanners warn and retain identification with explicit unassessed JSON. Python APIs remain download-free. Assessment never uploads APKs or inventories, and candidate versions are never installed-version claims. See [the integration guide](docs/integration.md) for APIs, cache locations, offline behavior and stable result contracts.
+Install a native v2 executable through [official installation channels](https://google.github.io/osv-scanner/installation/) or [GitHub releases](https://github.com/google/osv-scanner/releases) on PATH or in the working directory; `winget install Google.OSVScanner` is supported, and `--osv-scanner` preserves explicit selection. Compatibility is checked by version and required offline flags, rather than a single-release hash list. `--osv-scanner-sha256` optionally pins a publisher-verified executable digest. The CLI selects `./advisory-db`, then the user cache, or an explicit `--osv-db`. A missing database is provisioned automatically unless `--offline` is set; existing stale/corrupt databases require explicit `update`. Missing scanners warn and retain identification with explicit unassessed JSON. Python APIs remain download-free. Assessment never uploads APKs or inventories, and candidate versions are never installed-version claims. See [the integration guide](docs/integration.md) for APIs, cache locations, offline behavior and stable result contracts.

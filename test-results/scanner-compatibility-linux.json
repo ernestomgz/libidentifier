@@ -1,0 +1,80 @@
+[
+  {
+    "scanner": {
+      "path": "/mnt/c/Users/Windows 11/Desktop/projects/libidentifier/test-results/tmp/osv/osv-scanner_linux_amd64",
+      "version": "2.7.0",
+      "sha256": "160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b"
+    },
+    "samples": [
+      {
+        "sample": "AndroGoat-2.0.1.apk",
+        "status": "complete",
+        "potential_findings": 2
+      },
+      {
+        "sample": "InjuredAndroid-1.0.12-release.apk",
+        "status": "not_applicable",
+        "potential_findings": 0
+      },
+      {
+        "sample": "InsecureBankv2-2.3.1.apk",
+        "status": "not_applicable",
+        "potential_findings": 0
+      },
+      {
+        "sample": "allsafe-1.6.apk",
+        "status": "partial",
+        "potential_findings": 2
+      },
+      {
+        "sample": "diva.apk",
+        "status": "not_applicable",
+        "potential_findings": 0
+      },
+      {
+        "sample": "ovaa-1.0.0-app-debug.apk",
+        "status": "partial",
+        "potential_findings": 4
+      }
+    ]
+  },
+  {
+    "scanner": {
+      "path": "/mnt/c/Users/Windows 11/Desktop/projects/libidentifier/test-results/tmp/osv/v2.6.0-osv-scanner_linux_amd64",
+      "version": "2.6.0",
+      "sha256": "ca69b3d3cd08f889a49dc0a383122f71cc528b83803671df5fd874d97485b108"
+    },
+    "samples": [
+      {
+        "sample": "AndroGoat-2.0.1.apk",
+        "status": "complete",
+        "potential_findings": 2
+      },
+      {
+        "sample": "InjuredAndroid-1.0.12-release.apk",
+        "status": "not_applicable",
+        "potential_findings": 0
+      },
+      {
+        "sample": "InsecureBankv2-2.3.1.apk",
+        "status": "not_applicable",
+        "potential_findings": 0
+      },
+      {
+        "sample": "allsafe-1.6.apk",
+        "status": "partial",
+        "potential_findings": 2
+      },
+      {
+        "sample": "diva.apk",
+        "status": "not_applicable",
+        "potential_findings": 0
+      },
+      {
+        "sample": "ovaa-1.0.0-app-debug.apk",
+        "status": "partial",
+        "potential_findings": 4
+      }
+    ]
+  }
+]

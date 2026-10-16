@@ -28,6 +28,7 @@ class VulnerabilityOptions:
     max_potential_advisories_per_component: int = 100
     max_output_bytes: int = 64 * 1024 * 1024
     min_identity_score: float = 0.75
+    scanner_sha256: str | None = None
     def __post_init__(self):
         import math
         if not isinstance(self.discover_unknown_versions, bool):
@@ -43,6 +44,10 @@ class VulnerabilityOptions:
         if (not isinstance(self.min_identity_score, (int, float)) or isinstance(self.min_identity_score, bool)
                 or not math.isfinite(self.min_identity_score) or not 0 <= self.min_identity_score <= 1):
             raise ValueError('min_identity_score must be finite and between 0 and 1')
+        if self.scanner_sha256 is not None:
+            import re
+            if not isinstance(self.scanner_sha256, str) or not re.fullmatch(r'[0-9a-fA-F]{64}', self.scanner_sha256):
+                raise ValueError('scanner_sha256 must be a 64-character SHA-256 hex digest')
 
 @dataclass(frozen=True)
 class ScannerRecord(JsonModel):

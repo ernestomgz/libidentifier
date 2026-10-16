@@ -162,7 +162,7 @@ def test_missing_executable_timeout_and_bad_output(versioned, qualified_options,
     assert timeout.errors[0].code=='scanner_timeout'
     original=runner._execute
     def bad(cmd,**kwargs):
-        if '--version' in cmd: return original(cmd,**kwargs)
+        if '--version' in cmd or '--help' in cmd: return original(cmd,**kwargs)
         assert '--offline' in cmd and '--download-offline-databases' not in cmd
         return 0, '{"results":[]}', ''
     monkeypatch.setattr(runner,'_execute',bad)
@@ -209,7 +209,7 @@ def test_offline_python_network_gate_and_generated_input_only(versioned, qualifi
     original=runner._execute
     def inspect_call(cmd,**kwargs):
         assert kwargs['work'].name.startswith('libidentifier-osv-')
-        if '--version' not in cmd:
+        if '--version' not in cmd and '--help' not in cmd:
             assert '--offline' in cmd and '--no-resolve' in cmd
             assert '--offline-vulnerabilities' not in cmd and '--download-offline-databases' not in cmd
             path=Path(cmd[-1].removeprefix('osv-scanner:'))

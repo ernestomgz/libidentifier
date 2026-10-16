@@ -1,23 +1,25 @@
-"""Qualified OSV-Scanner 2.7.0 adapter. Fixed offline arguments, no APK input."""
+"""Capability-checked OSV-Scanner v2 adapter. Fixed offline arguments, no APK input.
+
+The installed executable is a trusted local dependency. Its distribution channel
+is not inferred from its filename/hash; callers may pin a publisher-verified hash.
+"""
 from __future__ import annotations
 import json
 import os
+import re
+import shutil
 import subprocess
 import tempfile
 import time
 from pathlib import Path
 from ..errors import AdvisoryError
-from .database import digest
+from .database import digest, SUPPORTED_ECOSYSTEMS
 from .models import ScannerRecord
 
-PINNED_VERSION = '2.7.0'
-# Official GitHub release asset SHA-256 digests, independently retrieved at qualification.
-APPROVED_HASHES = {
-    'nt': {'9964ed64ec9a387391eb4cc006ad5c531154821aef29b793e02c448de4686438',
-           '3e630381c1f1fd3c9c4d447e6ff2ef6c737083371722773db8337eead0f97962'},
-    'posix': {'160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b',
-              '4061ef4c021ed3c47f203b818f337e351336cc5cd67c0274fc36bd1dfc728dd7'},
-}
+SUPPORTED_MAJOR = 2
+REQUIRED_FLAGS = ('offline', 'no-resolve', 'no-call-analysis', 'all-packages',
+                  'all-vulns', 'format', 'config', 'lockfile')
+_VERSION = re.compile(r'^osv-scanner version:\s*v?(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]+)?)\s*$', re.MULTILINE)
 
 
 def _environment(cache, work):
@@ -56,15 +58,52 @@ def verify_scanner(options):
     if not path.is_file():
         raise AdvisoryError(f'OSV-Scanner executable is missing: {path}', code='scanner_missing')
     sha = digest(path)
-    if sha not in APPROVED_HASHES.get(os.name, set()):
-        raise AdvisoryError('Executable is not an approved OSV-Scanner 2.7.0 release asset', code='scanner_unapproved')
+    if options.scanner_sha256 and sha != options.scanner_sha256.lower():
+        raise AdvisoryError(f'OSV-Scanner checksum mismatch: {path}; expected {options.scanner_sha256.lower()}, actual {sha}',
+                            code='scanner_unapproved')
+    with path.open('rb') as source:
+        header = source.read(4)
+    if not (header.startswith(b'MZ') if os.name == 'nt' else header == b'\x7fELF'):
+        raise AdvisoryError(f'OSV-Scanner must be a native Windows/Linux executable: {path}', code='scanner_unapproved')
     with tempfile.TemporaryDirectory(prefix='libidentifier-osv-') as temporary:
         work = Path(temporary)
-        code, output, errors = _execute([str(path), '--version'], work=work, cache=work,
-                                        timeout=options.timeout_seconds, max_bytes=65536)
-    if code != 0 or f'osv-scanner version: {PINNED_VERSION}' not in output.splitlines():
-        raise AdvisoryError(f'Unsupported OSV-Scanner version: {output} {errors}', code='scanner_incompatible')
-    return ScannerRecord(str(path), PINNED_VERSION, sha)
+        try:
+            code, output, errors = _execute([str(path), '--version'], work=work, cache=work,
+                                            timeout=options.timeout_seconds, max_bytes=65536)
+            versions = _VERSION.findall(output + '\n' + errors)
+            if code != 0 or len(versions) != 1 or int(versions[0].split('.')[0]) != SUPPORTED_MAJOR:
+                raise AdvisoryError(f'Unsupported OSV-Scanner at {path}; requires an identifiable v2 release. '
+                                    f'Reported: {(output + errors)[:2000]}', code='scanner_incompatible')
+            version = versions[0]
+            code, help_text, errors = _execute([str(path), 'scan', 'source', '--offline', '--help'],
+                work=work, cache=work, timeout=options.timeout_seconds, max_bytes=256 * 1024)
+            missing = [flag for flag in REQUIRED_FLAGS if not re.search(
+                r'(?<![\w-])--' + re.escape(flag) + r'(?=[\s=,]|$)', help_text + '\n' + errors)]
+            # Some earlier v2 releases returned 128 even for explicit help.
+            if code not in (0, 128) or missing:
+                detail = ', '.join('--' + flag for flag in missing) or f'help exit {code}'
+                raise AdvisoryError(f'OSV-Scanner {version} at {path} lacks the required offline interface: {detail}',
+                                    code='scanner_incompatible')
+        except OSError as exc:
+            raise AdvisoryError(f'Cannot execute OSV-Scanner at {path}: {exc}', code='scanner_incompatible') from exc
+    return ScannerRecord(str(path), version, sha)
+
+
+def _cache_view(stage, work):
+    """Expose verified archives in both official v2 cache layouts, without migration."""
+    cache = work / 'cache'
+    for ecosystem in sorted(SUPPORTED_ECOSYSTEMS):
+        archive = stage / 'cache/osv-scalibr' / ecosystem / 'all.zip'
+        if not archive.is_file():
+            continue
+        for prefix in ('osv-scalibr', 'osv-scanner'):
+            target = cache / prefix / ecosystem / 'all.zip'
+            target.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                os.link(archive, target)
+            except OSError:
+                shutil.copyfile(archive, target)
+    return cache
 
 
 def match_versions(scanner, stage, packages, options):
@@ -78,7 +117,7 @@ def match_versions(scanner, stage, packages, options):
                    '--no-call-analysis', 'go', '--no-call-analysis', 'rust',
                    '--all-packages', '--all-vulns', '--format', 'json', '--config', str(config),
                    '--lockfile', 'osv-scanner:' + str(dependency_file)]
-        code, output, errors = _execute(command, work=work, cache=stage / 'cache',
+        code, output, errors = _execute(command, work=work, cache=_cache_view(stage, work),
                                         timeout=options.timeout_seconds, max_bytes=options.max_output_bytes)
         if code not in (0, 1):
             raise AdvisoryError(f'OSV-Scanner failed (exit {code}): {errors[:4000]}', code='scanner_failed')

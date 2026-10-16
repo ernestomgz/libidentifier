@@ -2,6 +2,8 @@
 
 Validation period: 2026-10-14–15 (Europe/Madrid).
 
+The later [scanner compatibility validation](scanner-compatibility.md) replaces this report's single-release executable allowlist with trusted local v2 capability checks and optional checksum pinning, and tests GitHub/WinGet v2.6.0 alongside v2.7.0. Original offline execution and result semantics remain.
+
 Later CLI discovery, automatic missing-database preparation and `identify --vulnerabilities` behavior are validated in [Stage 2 OSV convenience validation](osv-convenience-validation.md). Its 88-test Windows/Linux runs supersede the 79-test counts below; the original Python offline contracts remain unchanged.
 
 ## Outcome

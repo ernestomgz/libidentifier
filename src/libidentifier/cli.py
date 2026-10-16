@@ -109,7 +109,7 @@ def _assess(result, args):
         report = unavailable_report(result, exc)
     if report.errors:
         issue = report.errors[0]
-        download = (' Download OSV-Scanner v2.7.0 from https://github.com/google/osv-scanner/releases.'
+        download = (' Download OSV-Scanner v2 from https://github.com/google/osv-scanner/releases.'
                     if issue.code == 'scanner_missing' else '')
         print(f"libidentifier: warning: advisories not fully assessed ({issue.code}): {issue.message}{download}", file=sys.stderr)
     return report
@@ -243,6 +243,7 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument("--format", choices=["json", "table"], default="json")
             command.add_argument("--output")
         command.add_argument("--osv-scanner")
+        command.add_argument("--osv-scanner-sha256", help="optional SHA-256 pin for the selected executable")
         command.add_argument("--osv-db")
         command.add_argument("--offline", action="store_true", help="prohibit advisory database downloads (assessment always runs offline)")
         command.add_argument("--osv-timeout", type=float, default=60)

@@ -1,0 +1,80 @@
+[
+  {
+    "scanner": {
+      "path": "C:\\Users\\Windows 11\\Desktop\\projects\\libidentifier\\test-results\\tmp\\osv\\osv-scanner_windows_amd64.exe",
+      "version": "2.7.0",
+      "sha256": "9964ed64ec9a387391eb4cc006ad5c531154821aef29b793e02c448de4686438"
+    },
+    "samples": [
+      {
+        "sample": "allsafe-1.6.apk",
+        "status": "partial",
+        "potential_findings": 2
+      },
+      {
+        "sample": "AndroGoat-2.0.1.apk",
+        "status": "complete",
+        "potential_findings": 2
+      },
+      {
+        "sample": "diva.apk",
+        "status": "not_applicable",
+        "potential_findings": 0
+      },
+      {
+        "sample": "InjuredAndroid-1.0.12-release.apk",
+        "status": "not_applicable",
+        "potential_findings": 0
+      },
+      {
+        "sample": "InsecureBankv2-2.3.1.apk",
+        "status": "not_applicable",
+        "potential_findings": 0
+      },
+      {
+        "sample": "ovaa-1.0.0-app-debug.apk",
+        "status": "partial",
+        "potential_findings": 4
+      }
+    ]
+  },
+  {
+    "scanner": {
+      "path": "C:\\Users\\Windows 11\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Google.OSVScanner_Microsoft.Winget.Source_8wekyb3d8bbwe\\osv-scanner.exe",
+      "version": "2.6.0",
+      "sha256": "e0ed7644118b717b028c249ee9d3515024e55e8510747ca08906eb96765354d6"
+    },
+    "samples": [
+      {
+        "sample": "allsafe-1.6.apk",
+        "status": "partial",
+        "potential_findings": 2
+      },
+      {
+        "sample": "AndroGoat-2.0.1.apk",
+        "status": "complete",
+        "potential_findings": 2
+      },
+      {
+        "sample": "diva.apk",
+        "status": "not_applicable",
+        "potential_findings": 0
+      },
+      {
+        "sample": "InjuredAndroid-1.0.12-release.apk",
+        "status": "not_applicable",
+        "potential_findings": 0
+      },
+      {
+        "sample": "InsecureBankv2-2.3.1.apk",
+        "status": "not_applicable",
+        "potential_findings": 0
+      },
+      {
+        "sample": "ovaa-1.0.0-app-debug.apk",
+        "status": "partial",
+        "potential_findings": 4
+      }
+    ]
+  }
+]

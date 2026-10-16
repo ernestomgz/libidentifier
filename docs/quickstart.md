@@ -162,7 +162,7 @@ Do not add automatic upstream version discovery to the catalog workflow. Catalog
 
 All parsed unmatched definitions are returned by default. To request a deliberately capped JSON view, add `--max-unknown-classes 1000`; original totals and truncation remain visible. Matching and extraction are unaffected. Prefer `--output` or `result.write_json()` for large results; serialization streams without a full extra dictionary/string.
 
-Install a native OSV-Scanner v2.7.0 executable from the [official release](https://github.com/google/osv-scanner/releases/tag/v2.7.0) on PATH or in your working directory. Then:
+Install a trusted native OSV-Scanner v2 executable from [GitHub releases](https://github.com/google/osv-scanner/releases) or an [officially documented package manager](https://google.github.io/osv-scanner/installation/) on PATH or in your working directory. Windows users can run `winget install Google.OSVScanner`. GitHub v2.7.0 and WinGet/GitHub v2.6.0 are tested; other v2 builds must pass the same version/required-offline-flag checks. Then:
 
 ```sh
 libidentifier identify samples/ovaa-1.0.0-app-debug.apk --profiles profiles.sqlite --vulnerabilities --format table
@@ -171,6 +171,8 @@ libidentifier identify samples/ovaa-1.0.0-app-debug.apk --profiles profiles.sqli
 The CLI finds the scanner automatically and selects `./advisory-db` if present, otherwise a persistent user cache. A missing database is downloaded and validated before strictly offline assessment. Add `--offline` to prohibit downloads. `--osv-scanner <path>` and `--osv-db <directory>` override discovery. Missing scanners give a warning and complete identification; JSON reports `scanner_missing` and `not_assessed`, never a clean vulnerability result. Existing stale/corrupt databases require an explicit update:
 
 The original release filenames work without renaming: `osv-scanner_windows_amd64.exe`, `osv-scanner_windows_arm64.exe`, `osv-scanner_linux_amd64`, and `osv-scanner_linux_arm64`, on their respective platforms. Conventional `osv-scanner` / `osv-scanner.exe` names also work. Darwin binaries are unsupported and `osv-scanner_SHA256SUMS` is not an executable. Missing-scanner warnings link to [downloads](https://github.com/google/osv-scanner/releases).
+
+The executable no longer needs to match one release's hard-coded hashes. Its actual version/path/hash are recorded. Install from a trusted source and verify publisher provenance; the runtime compatibility check does not authenticate the publisher. For strict pinning, add `--osv-scanner-sha256 <publisher-verified-64-hex-digest>`. v1, unidentified builds, future major versions and missing required flags produce an explicit compatibility error; the selected path is shown so an explicit override can select another installation. Scanning never downloads a scanner or performs online verification.
 
 ```sh
 libidentifier vulnerabilities update --database advisory-db --ecosystem Maven
