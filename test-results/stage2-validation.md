@@ -106,6 +106,30 @@ workflow validation, not a hosted regression run. No Python implementation chang
 the recorded local matrix remains applicable. Hosted execution awaits the fix
 being pushed. Workflow maintenance instructions now require actionlint.
 
+### Scanner bootstrap and action-runtime correction
+
+The public job API for [run 39150638487](https://github.com/ernestomgz/libidentifier/actions/runs/39150638487)
+shows all six environments failed scanner provisioning, with runtime recording
+and regression tests skipped. The upload step succeeded but had no reports to
+upload. Detailed job logs required authenticated access; locally, executing the
+old bootstrap reproduced `ImportError` for the removed `runner.APPROVED_HASHES`.
+
+The bootstrap now owns its two OSV 2.7.0 qualification hashes, verified against
+the publisher's release checksums. This does not restore a runtime allowlist.
+It records download/checksum failures before raising them. Basic environment
+evidence is created after Python setup, before package installation. Checkout,
+setup-python and upload-artifact now use v7, whose action metadata targets Node
+24; the Node 20 and punycode messages were warnings, not the provisioning failure.
+
+Actionlint 1.7.12 accepts the updated workflow. The exact embedded bootstrap and
+runtime-recording programs executed successfully on Windows and Linux Python
+3.12 with the existing verified native OSV 2.7.0 binaries. Controlled local
+download fixtures also exercised network errors and checksum mismatch on both
+platforms: each failed and preserved its diagnostic JSON. These checks used
+cached binary bytes in place of network downloads; official URLs and checksums
+were independently checked against release metadata. Full hosted qualification
+still requires pushing this correction and completing the matrix.
+
 Reproduction: install dependencies, set `PYTHONPATH=src` when not installed,
 `LIBIDENTIFIER_REQUIRE_OSV=1`, `LIBIDENTIFIER_TEST_OSV` to the platform executable,
 and `LIBIDENTIFIER_TEST_PROFILES` to a schema-2 rebuild. Run

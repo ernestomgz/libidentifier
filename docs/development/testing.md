@@ -32,6 +32,11 @@ Before publishing workflow edits, run `actionlint .github/workflows/tests.yml`.
 Python compilation and YAML parsing alone do not validate Actions expression
 contexts. Job-level environment expressions must use contexts available at that
 scope (for example `matrix.os`); `runner.os` is available in step conditions.
+CI writes bootstrap evidence before package installation and records scanner
+download/checksum errors before re-raising them. Qualification downloads use
+workflow-local publisher checksum pins; runtime scanner acceptance remains based
+on capabilities and any caller-supplied hash. When artifacts are missing, inspect
+the first failing step; the final upload warning is not the original failure.
 Historical reports under `test-results/` are evidence for their recorded checkout.
 The [Stage 2 checklist](stages/stage-2.md) owns acceptance status.
 

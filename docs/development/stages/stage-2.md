@@ -29,9 +29,11 @@ Tests: `tests/test_stage2.py` plus the existing native extraction, ownership,
 profile, OSV, renderer and compatibility suites. The benchmark pilot has no
 complete ground truth; production accuracy remains a Stage 3 gate. The local
 Python 3.11/3.12/3.13 Windows/WSL matrix passed; the hosted CI matrix retains
-runtime/JUnit evidence when executed. The first push was rejected before job
-execution because of a job-level context error; the corrected workflow passes
-actionlint, and hosted matrix execution remains pending.
+runtime/JUnit evidence when executed. After fixing the initial context error,
+all six hosted jobs reached scanner provisioning and failed before tests because
+the bootstrap imported a removed internal constant. The self-contained bootstrap
+fix passes actionlint and Windows/Linux local success/failure checks; hosted
+test qualification remains pending.
 
 Moraine integration is eligible only after required gates pass. A CI definition
 alone does not constitute platform validation. No full Maven resolver, call

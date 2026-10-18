@@ -16,22 +16,50 @@ jobs:
       LIBIDENTIFIER_REQUIRE_OSV: '1'
       LIBIDENTIFIER_TEST_OSV: ${{ github.workspace }}/.tools/osv-scanner${{ matrix.os == 'windows-latest' && '.exe' || '' }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
+      - name: Initialize qualification evidence
+        shell: python
+        run: |
+          import json, os, pathlib, platform, sys
+          report = pathlib.Path('test-results/ci')
+          report.mkdir(parents=True, exist_ok=True)
+          (report / 'bootstrap.json').write_text(json.dumps({
+              'revision': os.environ['GITHUB_SHA'],
+              'python': sys.version, 'platform': platform.platform(),
+          }, indent=2), encoding='utf-8')
       - run: python -m pip install ".[dev]"
       - name: Provision qualified scanner (maintenance only)
         shell: python
         run: |
-          import hashlib, os, pathlib, urllib.request
-          from libidentifier.vulnerabilities.runner import APPROVED_HASHES
+          import hashlib, json, os, pathlib, shutil, urllib.request
+          # Qualification download pins, separate from runtime scanner compatibility.
+          assets = {
+              'nt': ('osv-scanner_windows_amd64.exe', '9964ed64ec9a387391eb4cc006ad5c531154821aef29b793e02c448de4686438'),
+              'posix': ('osv-scanner_linux_amd64', '160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b'),
+          }
+          asset, expected = assets[os.name]
           target = pathlib.Path(os.environ['LIBIDENTIFIER_TEST_OSV'])
           target.parent.mkdir(parents=True, exist_ok=True)
-          asset = 'osv-scanner_windows_amd64.exe' if os.name == 'nt' else 'osv-scanner_linux_amd64'
-          urllib.request.urlretrieve('https://github.com/google/osv-scanner/releases/download/v2.7.0/' + asset, target)
-          assert hashlib.sha256(target.read_bytes()).hexdigest() in APPROVED_HASHES[os.name]
-          target.chmod(0o755)
+          url = 'https://github.com/google/osv-scanner/releases/download/v2.7.0/' + asset
+          record = {'url': url, 'expected_sha256': expected, 'status': 'downloading'}
+          try:
+              with urllib.request.urlopen(url, timeout=60) as source, target.open('wb') as output:
+                  shutil.copyfileobj(source, output)
+              record['actual_sha256'] = hashlib.sha256(target.read_bytes()).hexdigest()
+              if record['actual_sha256'] != expected:
+                  raise RuntimeError('OSV release checksum mismatch')
+              target.chmod(0o755)
+              record['status'] = 'verified'
+          except Exception as error:
+              record.update(status='failed', error=f'{type(error).__name__}: {error}')
+              raise
+          finally:
+              report = pathlib.Path('test-results/ci')
+              report.mkdir(parents=True, exist_ok=True)
+              (report / 'scanner-provisioning.json').write_text(json.dumps(record, indent=2), encoding='utf-8')
       - name: Record installed runtime
         shell: python
         run: |
@@ -61,7 +89,7 @@ jobs:
         run: sudo -E unshare -n "$(command -v python)" -m pytest -q -ra tests/test_offline_assessment.py tests/test_osv_convenience.py tests/test_stage2.py --junitxml=test-results/ci/offline.xml --basetemp .pytest_tmp/offline-ci
       - name: Preserve qualification evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: qualification-${{ matrix.os }}-py${{ matrix.python }}
           path: test-results/ci/
