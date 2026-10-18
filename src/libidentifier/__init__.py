@@ -5,6 +5,8 @@ from .vulnerabilities.models import AssessmentResult, VulnerabilityOptions, Vuln
 from .vulnerabilities.database import provision_advisory_database, update_advisory_database, validate_advisory_database
 from .config import IdentifyOptions
 from .models import ProfileBuildResult, ScanResult
+from .models import (Producer, AnalysisRun, EvidenceRecord, EntityRef, OwnershipAssertion,
+                     Relationship, UnattributedCluster)
 from .version import __version__
 
 __all__ = [
@@ -23,6 +25,8 @@ __all__ = [
     "provision_advisory_database",
     "update_advisory_database",
     "validate_advisory_database",
+    "Producer", "AnalysisRun", "EvidenceRecord", "EntityRef", "OwnershipAssertion",
+    "Relationship", "UnattributedCluster",
 ]
 
 

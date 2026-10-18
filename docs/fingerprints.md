@@ -1,8 +1,8 @@
 # Fingerprints
 
-## dex-shape-v1
+## dex-shape-v2
 
-`dex-shape-v1` hashes normalized class structure. It includes access categories, field and method counts, normalized field types, method parameter and return type categories, method flags, superclass category, and interface categories.
+`dex-shape-v2` hashes normalized class structure. It includes access categories, field and method counts, normalized field types, method parameter and return type categories, method flags, superclass category, and interface categories. Canonical descriptors and actual interface lists come from validated DEX tables; the hash domain is `dex-shape-v2`. Old v1 profiles require rebuilding.
 
 Application and library-specific object type names are normalized to `OBJECT`; stable platform descriptors such as `Ljava/lang/Object;` and Android/JDK descriptors are preserved. Method and field names are not part of the digest, except constructors are categorized specially.
 

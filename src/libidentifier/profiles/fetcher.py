@@ -17,13 +17,18 @@ from .store import sha256_file
 
 
 def cache_path(cache_dir: str | Path, ref: CatalogReference) -> Path:
-    return Path(cache_dir) / artifact_filename(ref)
+    legacy = Path(cache_dir) / artifact_filename(ref)
+    # Reuse old verified caches while isolating new artifacts by content hash.
+    if legacy.is_file() and sha256_file(legacy) == ref.sha256:
+        return legacy
+    return Path(cache_dir) / ref.sha256 / artifact_filename(ref)
 
 
 def fetch_reference(ref: CatalogReference, cache_dir: str | Path, *, offline: bool = False) -> dict:
     cache_root = Path(cache_dir)
     cache_root.mkdir(parents=True, exist_ok=True)
     dest = cache_path(cache_root, ref)
+    dest.parent.mkdir(parents=True, exist_ok=True)
     url = resolve_reference_url(ref)
     if dest.exists():
         digest = sha256_file(dest)
@@ -48,7 +53,19 @@ def fetch_reference(ref: CatalogReference, cache_dir: str | Path, *, offline: bo
 
 
 def fetch_catalog(catalog: ReferenceCatalog, cache_dir: str | Path, *, offline: bool = False) -> list[dict]:
-    return [fetch_reference(ref, cache_dir, offline=offline) for ref in catalog.references]
+    results = []
+    for ref in catalog.references:
+        row = fetch_reference(ref, cache_dir, offline=offline)
+        if ref.pom_url:
+            from dataclasses import replace
+            pom_ref = replace(ref, url=ref.pom_url, sha256=ref.pom_sha256, pom_url=None, pom_sha256=None)
+            fetched = fetch_reference(pom_ref, cache_dir, offline=offline)
+            target = Path(row['path']).with_suffix('.pom')
+            shutil.copyfile(fetched['path'], target)
+            row['pom_sha256'] = fetched['sha256']
+            row['pom_source'] = ref.pom_url
+        results.append(row)
+    return results
 
 
 def rebuild_database(
@@ -70,9 +87,8 @@ def rebuild_database(
     tmp_db.unlink(missing_ok=True)
     results: list[dict] = []
     try:
-        by_purl = {item["purl"]: item for item in fetched}
-        for ref in catalog.references:
-            artifact = by_purl[ref.purl]["path"]
+        for ref, fetched_item in zip(catalog.references, fetched):
+            artifact = fetched_item['path']
             built = build_profile(
                 artifact,
                 purl=ref.purl,
@@ -81,6 +97,22 @@ def rebuild_database(
                 android_jar=android_jar,
                 reference_sha256=ref.sha256,
             )
+            # Keep reviewed origins inside the distributable database as well.
+            from .store import connect_write
+            conn = connect_write(tmp_db)
+            try:
+                with conn:
+                    row = conn.execute('SELECT artifact_id,provenance_json FROM reference_artifact WHERE release_id=? AND sha256=?', (built.release_id, ref.sha256)).fetchone()
+                    provenance = json.loads(row[1])
+                    provenance.update({'url':resolve_reference_url(ref),'license':ref.license})
+                    conn.execute('UPDATE reference_artifact SET provenance_json=? WHERE artifact_id=?', (json.dumps(provenance,sort_keys=True),row[0]))
+                    if fetched_item.get('pom_source'):
+                        for sha, body in conn.execute('SELECT source_sha256,body_json FROM published_metadata WHERE release_id=?', (built.release_id,)).fetchall():
+                            metadata = json.loads(body)
+                            metadata['source'] = fetched_item['pom_source']
+                            conn.execute('UPDATE published_metadata SET body_json=? WHERE release_id=? AND source_sha256=?', (json.dumps(metadata,sort_keys=True),built.release_id,sha))
+            finally:
+                conn.close()
             results.append(
                 {
                     **built.to_dict(),

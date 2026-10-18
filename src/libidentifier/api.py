@@ -36,6 +36,9 @@ def inspect(path, *, options: IdentifyOptions | None = None) -> ScanResult:
     opts = options or IdentifyOptions()
     inv = inspect_path(Path(path), opts)
     result = empty_scan_result(inv, __version__)
+    from .relationships import enrich
+    from .extractors.version_metadata import apply_version_metadata
+    result = enrich(apply_version_metadata(result, inv), inv, opts)
     unknown = result.unknown_classes if opts.max_emitted_unknown_classes is None else result.unknown_classes[:opts.max_emitted_unknown_classes]
     return replace(result, unknown_classes=unknown,
         coverage=_result_coverage(result.coverage, total=len(inv.dex_classes), emitted=len(unknown), identification="not_performed"))
@@ -47,28 +50,26 @@ def identify(path, *, profiles, options: IdentifyOptions | None = None) -> ScanR
     conn = connect_readonly(profiles)
     try:
         components, hints, unknown = match_inventory(conn, inv, opts)
+        database = database_record(profiles)
+        result = ScanResult(
+            schema_version=SCHEMA_VERSION, tool_name="libidentifier", tool_version=__version__,
+            fingerprint_algorithm=FINGERPRINT_ALGORITHM, profile_database=database,
+            input=inv.input,
+            analyzed_files=sorted(inv.analyzed_files, key=lambda a: (a.member or "", a.sha256)),
+            frameworks_detected=inv.frameworks_detected, components=components,
+            class_ownership_hints=hints, unknown_classes=unknown, coverage=inv.coverage, errors=inv.errors)
+        from .extractors.version_metadata import apply_version_metadata
+        from .relationships import enrich
+        result = enrich(apply_version_metadata(result, inv), inv, opts, conn)
     except sqlite3.Error as exc:
         raise ProfileError(f"cannot query profile database: {exc}") from exc
     finally:
         conn.close()
-    database = database_record(profiles)
     emitted = unknown if opts.max_emitted_unknown_classes is None else unknown[:opts.max_emitted_unknown_classes]
-    return ScanResult(
-        schema_version=SCHEMA_VERSION,
-        tool_name="libidentifier",
-        tool_version=__version__,
-        fingerprint_algorithm=FINGERPRINT_ALGORITHM,
-        profile_database=database,
-        input=inv.input,
-        analyzed_files=sorted(inv.analyzed_files, key=lambda a: (a.member or "", a.sha256)),
-        frameworks_detected=inv.frameworks_detected,
-        components=components,
-        class_ownership_hints=hints,
-        unknown_classes=emitted,
+    return replace(result, unknown_classes=emitted,
         coverage=_result_coverage(inv.coverage, total=len(unknown), emitted=len(emitted),
-                                  identification="limited" if database.profile_count else "no_profiles"),
-        errors=inv.errors,
-    )
+                                  identification="limited" if database.profile_count else "no_profiles"))
+
 
 
 def correlate(result: ScanResult, *, options: VulnerabilityOptions) -> VulnerabilityReport:

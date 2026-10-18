@@ -35,8 +35,14 @@ def _write_result(result: ScanResult, args) -> None:
         write_table(result)
 
 
+def _identify_options(args):
+    return IdentifyOptions(max_emitted_unknown_classes=args.max_unknown_classes,
+        extract_relationships=not args.no_relationships, extract_calls=not args.no_calls,
+        group_unknown_classes=not args.no_grouping)
+
+
 def _cmd_inspect(args) -> int:
-    result = inspect(args.path, options=IdentifyOptions(max_emitted_unknown_classes=args.max_unknown_classes))
+    result = inspect(args.path, options=_identify_options(args))
     _write_result(result, args)
     return 4 if any(e.severity == "error" for e in result.errors) else 0
 
@@ -48,7 +54,7 @@ def _cmd_identify(args) -> int:
             "no profile database specified; pass --profiles, set LIBIDENTIFIER_PROFILES, "
             "or build one with 'libidentifier profiles rebuild'"
         )
-    result = identify(args.path, profiles=profiles, options=IdentifyOptions(max_emitted_unknown_classes=args.max_unknown_classes))
+    result = identify(args.path, profiles=profiles, options=_identify_options(args))
     if args.vulnerabilities:
         assessment = AssessmentResult(result, _assess(result, args))
         _write_assessment(assessment, args)
@@ -146,11 +152,11 @@ def _cmd_scan(args):
         raise ProfileError("scan requires --profiles or LIBIDENTIFIER_PROFILES")
     if args.vulnerabilities:
         identification = identify(args.path, profiles=profiles,
-            options=IdentifyOptions(max_emitted_unknown_classes=args.max_unknown_classes))
+            options=_identify_options(args))
         result = AssessmentResult(identification, _assess(identification, args))
     else:
         result = scan(args.path, profiles=profiles,
-            options=IdentifyOptions(max_emitted_unknown_classes=args.max_unknown_classes))
+            options=_identify_options(args))
     _write_assessment(result, args)
     return _assessment_exit(result)
 
@@ -238,6 +244,10 @@ def build_parser() -> argparse.ArgumentParser:
     correlate_p = sub.add_parser("correlate")
     correlate_p.add_argument("input")
     correlate_p.set_defaults(func=_cmd_correlate)
+    for command in (inspect_p, identify_p, scan_p):
+        command.add_argument('--no-relationships', action='store_true', help='skip structural and published relationships')
+        command.add_argument('--no-calls', action='store_true', help='skip explicit invocation extraction')
+        command.add_argument('--no-grouping', action='store_true', help='skip unattributed clustering')
     for command in (scan_p, correlate_p, identify_p):
         if command is not identify_p:
             command.add_argument("--format", choices=["json", "table"], default="json")

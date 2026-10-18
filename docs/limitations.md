@@ -1,5 +1,20 @@
 # Limitations
 
+- Stage 2 adds deterministic unattributed clusters and evidence-backed structural,
+  ordinary invocation and component references. Namespace/connectivity does not
+  establish library origin. Dynamic call-site targets, runtime dispatch,
+  reachability and full dependency trees are not reconstructed.
+- Standard DEX 035/037/038/039/040 is supported by the supplementary reader;
+  container DEX 041, reverse-endian and optimized instruction formats are rejected.
+- POM interpretation is direct/local only; unresolved parent/BOM/profile context
+  remains explicit. Declarations from candidate releases are conditional.
+- Simple canonical Maven `pom.properties` can corroborate an observed candidate
+  version only with exact-descriptor code evidence. It is a modifiable declaration,
+  not authenticated release provenance; unsupported properties syntax is ignored.
+- Multiple reference variants are retained; Stage 2 structural scoring uses one
+  primary DEX variant per release. Actual R8 generation and calibrated fusion are
+  deferred. Production thresholds require representative held-out benchmarks.
+
 - Optional offline Maven advisory assessment uses a trusted local OSV-Scanner v2 executable with runtime interface checks. v2.6.0 and v2.7.0 are tested; all historical/future releases are not individually qualified. v1, unidentified builds, future major versions and missing required flags are rejected. It never performs online advisory queries, dependency resolution, reachability analysis or exploitability decisions.
 - Assessment-enabled CLI setup downloads a wholly absent advisory database unless `--offline` is supplied. Existing stale/corrupt databases require explicit maintenance. Python identification/correlation APIs never download. Executable SHA-256 pinning is optional; compatibility checks do not authenticate a publisher. Install from trusted channels and supply a publisher-verified pin for exact executable approval policies.
 - No JavaScript, Hermes, Dart AOT, or Flutter package inventory.

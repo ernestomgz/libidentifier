@@ -1,0 +1,201 @@
+{
+  "recorded_at": "2026-10-18T17:15:33.797832+00:00",
+  "execution": "local Windows and WSL Ubuntu; not hosted CI",
+  "regression_selection": "not real_apk_sca_regression and not injured_android_flutter and not published_maven_advisory_version_matching",
+  "no_egress_selection": "tests/test_offline_assessment.py tests/test_osv_convenience.py tests/test_stage2.py; not published_maven_advisory_version_matching",
+  "network_isolation": "Linux unshare -n for each no_egress suite",
+  "source_digest_format": "SHA256 of sorted source/tests Python paths and pyproject.toml; each repository-relative POSIX path plus NUL, then binary SHA256 of its bytes",
+  "timing_limitations": "Concurrent local qualification runs; not performance benchmarks",
+  "exclusions": "Eight optional external-asset cases (six APK regressions, one Flutter APK inspection, one published advisory snapshot); earlier broad suites cover these.",
+  "environments": [
+    {
+      "environment": "windows-3.11",
+      "runtime": {
+        "python": "3.11.17",
+        "platform": "Windows-10-10.0.26200-SP0",
+        "lief": "0.17.1",
+        "pytest": "9.1.1",
+        "package_installation": "regular wheel; PYTHONPATH unset",
+        "installed_module": "C:\\Users\\Windows 11\\Desktop\\projects\\libidentifier\\test-results\\tmp\\stage2\\matrix\\windows-3.11\\Lib\\site-packages\\libidentifier",
+        "installed_source_files_verified": 40,
+        "source_tests_project_sha256": "bef7d860715614255395f6b02e62b8d88902d53df72bde5f759900cb6b7ac3f4",
+        "scanner_sha256": "9964ed64ec9a387391eb4cc006ad5c531154821aef29b793e02c448de4686438",
+        "scanner_version": "osv-scanner version: 2.7.0\nosv-scalibr version: 0.5.3\ncommit: bfe2f84abd2f09fe0b83ba7f6dad40d296762f40\nbuilt at: 2026-10-12T00:39:39Z"
+      },
+      "console_entry_point": "passed: libidentifier --help",
+      "suites": {
+        "regression": {
+          "tests": 176,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 118.686,
+          "started": "2026-10-18T18:56:44.798396+02:00",
+          "deselected": 8
+        }
+      }
+    },
+    {
+      "environment": "windows-3.12",
+      "runtime": {
+        "python": "3.12.15",
+        "platform": "Windows-11-10.0.26200-SP0",
+        "lief": "0.17.1",
+        "pytest": "9.1.1",
+        "package_installation": "regular wheel; PYTHONPATH unset",
+        "installed_module": "C:\\Users\\Windows 11\\Desktop\\projects\\libidentifier\\test-results\\tmp\\stage2\\matrix\\windows-3.12\\Lib\\site-packages\\libidentifier",
+        "installed_source_files_verified": 40,
+        "source_tests_project_sha256": "bef7d860715614255395f6b02e62b8d88902d53df72bde5f759900cb6b7ac3f4",
+        "scanner_sha256": "9964ed64ec9a387391eb4cc006ad5c531154821aef29b793e02c448de4686438",
+        "scanner_version": "osv-scanner version: 2.7.0\nosv-scalibr version: 0.5.3\ncommit: bfe2f84abd2f09fe0b83ba7f6dad40d296762f40\nbuilt at: 2026-10-12T00:39:39Z"
+      },
+      "console_entry_point": "passed: libidentifier --help",
+      "suites": {
+        "regression": {
+          "tests": 176,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 118.467,
+          "started": "2026-10-18T18:56:45.058722+02:00",
+          "deselected": 8
+        }
+      }
+    },
+    {
+      "environment": "windows-3.13",
+      "runtime": {
+        "python": "3.13.16",
+        "platform": "Windows-11-10.0.26200-SP0",
+        "lief": "0.17.1",
+        "pytest": "9.1.1",
+        "package_installation": "regular wheel; PYTHONPATH unset",
+        "installed_module": "C:\\Users\\Windows 11\\Desktop\\projects\\libidentifier\\test-results\\tmp\\stage2\\matrix\\windows-3.13\\Lib\\site-packages\\libidentifier",
+        "installed_source_files_verified": 40,
+        "source_tests_project_sha256": "bef7d860715614255395f6b02e62b8d88902d53df72bde5f759900cb6b7ac3f4",
+        "scanner_sha256": "9964ed64ec9a387391eb4cc006ad5c531154821aef29b793e02c448de4686438",
+        "scanner_version": "osv-scanner version: 2.7.0\nosv-scalibr version: 0.5.3\ncommit: bfe2f84abd2f09fe0b83ba7f6dad40d296762f40\nbuilt at: 2026-10-12T00:39:39Z"
+      },
+      "console_entry_point": "passed: libidentifier --help",
+      "suites": {
+        "regression": {
+          "tests": 176,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 120.306,
+          "started": "2026-10-18T18:56:43.890271+02:00",
+          "deselected": 8
+        }
+      }
+    },
+    {
+      "environment": "linux-3.11",
+      "runtime": {
+        "python": "3.11.17",
+        "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+        "lief": "0.17.1",
+        "pytest": "9.1.1",
+        "package_installation": "regular wheel; PYTHONPATH unset",
+        "installed_module": "/mnt/c/Users/Windows 11/Desktop/projects/libidentifier/test-results/tmp/stage2/matrix/linux-3.11/lib/python3.11/site-packages/libidentifier",
+        "installed_source_files_verified": 40,
+        "source_tests_project_sha256": "bef7d860715614255395f6b02e62b8d88902d53df72bde5f759900cb6b7ac3f4",
+        "scanner_sha256": "160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b",
+        "scanner_version": "osv-scanner version: 2.7.0\nosv-scalibr version: 0.5.3\ncommit: bfe2f84abd2f09fe0b83ba7f6dad40d296762f40\nbuilt at: 2026-10-12T00:39:39Z"
+      },
+      "console_entry_point": "passed: libidentifier --help",
+      "suites": {
+        "regression": {
+          "tests": 175,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 646.941,
+          "started": "2026-10-18T19:02:33.159326+02:00",
+          "deselected": 8
+        },
+        "no_egress": {
+          "tests": 58,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 346.097,
+          "started": "2026-10-18T19:03:55.827168+02:00",
+          "deselected": 1
+        }
+      }
+    },
+    {
+      "environment": "linux-3.12",
+      "runtime": {
+        "python": "3.12.15",
+        "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+        "lief": "0.17.1",
+        "pytest": "9.1.1",
+        "package_installation": "regular wheel; PYTHONPATH unset",
+        "installed_module": "/mnt/c/Users/Windows 11/Desktop/projects/libidentifier/test-results/tmp/stage2/matrix/linux-3.12/lib/python3.12/site-packages/libidentifier",
+        "installed_source_files_verified": 40,
+        "source_tests_project_sha256": "bef7d860715614255395f6b02e62b8d88902d53df72bde5f759900cb6b7ac3f4",
+        "scanner_sha256": "160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b",
+        "scanner_version": "osv-scanner version: 2.7.0\nosv-scalibr version: 0.5.3\ncommit: bfe2f84abd2f09fe0b83ba7f6dad40d296762f40\nbuilt at: 2026-10-12T00:39:39Z"
+      },
+      "console_entry_point": "passed: libidentifier --help",
+      "suites": {
+        "regression": {
+          "tests": 175,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 596.106,
+          "started": "2026-10-18T19:05:12.980150+02:00",
+          "deselected": 8
+        },
+        "no_egress": {
+          "tests": 58,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 367.077,
+          "started": "2026-10-18T19:05:29.228457+02:00",
+          "deselected": 1
+        }
+      }
+    },
+    {
+      "environment": "linux-3.13",
+      "runtime": {
+        "python": "3.13.16",
+        "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+        "lief": "0.17.1",
+        "pytest": "9.1.1",
+        "package_installation": "regular wheel; PYTHONPATH unset",
+        "installed_module": "/mnt/c/Users/Windows 11/Desktop/projects/libidentifier/test-results/tmp/stage2/matrix/linux-3.13/lib/python3.13/site-packages/libidentifier",
+        "installed_source_files_verified": 40,
+        "source_tests_project_sha256": "bef7d860715614255395f6b02e62b8d88902d53df72bde5f759900cb6b7ac3f4",
+        "scanner_sha256": "160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b",
+        "scanner_version": "osv-scanner version: 2.7.0\nosv-scalibr version: 0.5.3\ncommit: bfe2f84abd2f09fe0b83ba7f6dad40d296762f40\nbuilt at: 2026-10-12T00:39:39Z"
+      },
+      "console_entry_point": "passed: libidentifier --help",
+      "suites": {
+        "regression": {
+          "tests": 175,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 620.945,
+          "started": "2026-10-18T19:03:05.427838+02:00",
+          "deselected": 8
+        },
+        "no_egress": {
+          "tests": 58,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 259.867,
+          "started": "2026-10-18T19:10:05.675245+02:00",
+          "deselected": 1
+        }
+      }
+    }
+  ]
+}

@@ -26,10 +26,14 @@ def sha256_file(path: str | Path) -> str:
 
 def connect_write(path: str | Path) -> sqlite3.Connection:
     conn = sqlite3.connect(Path(path))
-    conn.execute("PRAGMA foreign_keys=ON")
-    initialize(conn)
-    validate(conn)
-    return conn
+    try:
+        conn.execute("PRAGMA foreign_keys=ON")
+        initialize(conn)
+        validate(conn)
+        return conn
+    except Exception:
+        conn.close()
+        raise
 
 
 def connect_readonly(path: str | Path) -> sqlite3.Connection:
@@ -80,7 +84,8 @@ def family_id_from_purl(purl: str) -> tuple[str, str, str | None, str]:
 
 
 def release_id(family_id: str, version: str, source_sha256: str) -> str:
-    return hashlib.sha256(f"{family_id}:{version}:{source_sha256}".encode()).hexdigest()[:24]
+    # Kept as an internal call shape; release identity no longer depends on bytes.
+    return hashlib.sha256(f"{family_id}:{version}".encode()).hexdigest()[:24]
 
 
 def upsert_release(
@@ -93,16 +98,14 @@ def upsert_release(
     dex_shapes: Counter[str] | None = None,
     dex_classes: Counter[tuple[str, str]] | None = None,
     elf_identity: dict | None = None,
+    build_configuration: dict | None = None,
+    output_sha256: str | None = None,
+    published_metadata: dict | None = None,
 ) -> tuple[str, str, str]:
     family_id, name, package_name, version = family_id_from_purl(purl)
     rid = release_id(family_id, version, source_sha256)
     ecosystem = "Maven" if purl.startswith("pkg:maven/") else (purl[4:].split("/", 1)[0] if purl.startswith("pkg:") else None)
     with conn:
-        existing = conn.execute(
-            "SELECT source_sha256 FROM library_release WHERE purl=? AND version=?", (purl, version)
-        ).fetchone()
-        if existing and existing[0] != source_sha256:
-            raise ValueError("conflicting source hash for same purl/version")
         conn.execute(
             "INSERT OR IGNORE INTO library_family(family_id, name, ecosystem, package_name) VALUES (?, ?, ?, ?)",
             (family_id, name, ecosystem, package_name),
@@ -110,33 +113,37 @@ def upsert_release(
         conn.execute(
             """
             INSERT OR IGNORE INTO library_release(
-              release_id, family_id, version, purl, source_sha256, source_format, provenance_json, fingerprint_algorithm
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+              release_id, family_id, version, purl, fingerprint_algorithm
+            ) VALUES (?, ?, ?, ?, ?)
             """,
             (
                 rid,
                 family_id,
                 version,
                 purl,
-                source_sha256,
-                source_format,
-                json.dumps(provenance, sort_keys=True, separators=(",", ":")),
                 FINGERPRINT_ALGORITHM,
             ),
         )
-        if dex_shapes:
-            for digest, count in sorted(dex_shapes.items()):
-                conn.execute(
-                    "INSERT OR REPLACE INTO dex_shape(release_id, digest, multiplicity) VALUES (?, ?, ?)",
-                    (rid, digest, int(count)),
-                )
-        if dex_classes:
-            for (digest, descriptor), count in sorted(dex_classes.items()):
-                conn.execute(
-                    "INSERT OR REPLACE INTO dex_class(release_id, digest, descriptor, multiplicity) VALUES (?, ?, ?, ?)",
-                    (rid, digest, descriptor, int(count)),
-                )
+        aid = hashlib.sha256(f'{rid}:{source_sha256}'.encode()).hexdigest()[:24]
+        configuration = json.dumps(build_configuration or {'kind': 'original'}, sort_keys=True, separators=(',', ':'))
+        output_sha = output_sha256 or source_sha256
+        vid = hashlib.sha256(f'{aid}:{output_sha}:{configuration}'.encode()).hexdigest()[:24]
+        primary = not conn.execute("SELECT 1 FROM build_variant v JOIN reference_artifact a USING(artifact_id) WHERE a.release_id=? AND v.is_primary=1 AND ((a.format='elf')=?)", (rid, int(source_format == 'elf'))).fetchone()
+        conn.execute('INSERT OR IGNORE INTO reference_artifact VALUES (?,?,?,?,?)',
+                     (aid, rid, source_sha256, source_format, json.dumps(provenance, sort_keys=True)))
+        conn.execute('INSERT OR IGNORE INTO build_variant VALUES (?,?,?,?,?)', (vid, aid, output_sha, configuration, int(primary)))
+        occurrences = dex_classes or Counter({(d, ''): n for d, n in (dex_shapes or {}).items()})
+        for (digest, descriptor), count in sorted(occurrences.items()):
+            fid = hashlib.sha256(f'dex-shape-v2:{digest}'.encode()).hexdigest()
+            conn.execute('INSERT OR IGNORE INTO fingerprint VALUES (?,?,?)', (fid, 'dex-shape-v2', digest))
+            conn.execute('INSERT OR REPLACE INTO fingerprint_occurrence VALUES (?,?,?,?)', (vid, fid, descriptor, count))
+        if published_metadata is not None:
+            conn.execute('INSERT OR REPLACE INTO published_metadata VALUES (?,?,?)',
+                         (rid, published_metadata['sha256'], json.dumps(published_metadata, sort_keys=True)))
         if elf_identity:
+            fid = hashlib.sha256(f"elf-identity-v1:{elf_identity['sha256']}".encode()).hexdigest()
+            conn.execute('INSERT OR IGNORE INTO fingerprint VALUES (?,?,?)', (fid, 'elf-identity-v1', elf_identity['sha256']))
+            conn.execute('INSERT OR IGNORE INTO fingerprint_occurrence VALUES (?,?,?,1)', (vid, fid, elf_identity['abi']))
             conn.execute(
                 """
                 INSERT OR REPLACE INTO elf_identity(release_id, abi, sha256, build_id, soname, symbol_digest)
@@ -181,7 +188,9 @@ def release_rows(conn: sqlite3.Connection, release_ids: set[str]) -> dict[str, d
     rows = {}
     for row in conn.execute(
         f"""
-        SELECT r.release_id, r.family_id, r.version, r.purl, r.source_sha256, r.source_format,
+        SELECT r.release_id, r.family_id, r.version, r.purl,
+               (SELECT sha256 FROM reference_artifact WHERE release_id=r.release_id ORDER BY artifact_id LIMIT 1),
+               (SELECT format FROM reference_artifact WHERE release_id=r.release_id ORDER BY artifact_id LIMIT 1),
                f.name, f.ecosystem, f.package_name
         FROM library_release r JOIN library_family f USING(family_id)
         WHERE r.release_id IN ({placeholders})
@@ -198,5 +207,6 @@ def release_rows(conn: sqlite3.Connection, release_ids: set[str]) -> dict[str, d
             "name": row[6],
             "ecosystem": row[7],
             "package_name": row[8],
+            "source_hashes": [x[0] for x in conn.execute('SELECT sha256 FROM reference_artifact WHERE release_id=?', (row[0],))],
         }
     return rows

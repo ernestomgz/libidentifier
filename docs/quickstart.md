@@ -2,6 +2,14 @@
 
 LibIdentifier identifies compiled Android/Java and native components from a local signature database. APK identification is offline; reference downloads only happen when you explicitly run profile maintenance commands.
 
+Upgrading from the original prototype requires an explicit
+[schema-2 profile rebuild](profile-database.md); keep the old engine/database pair
+for rollback. Existing Python calls and compact table layout remain supported.
+JSON now includes evidence, clusters and typed relationships; see the authoritative
+[integration guide](integration.md#stage-2-evidence-clusters-and-relationships).
+For reduced enrichment cost, `inspect`, `identify` and `scan` accept
+`--no-calls`, `--no-relationships` and `--no-grouping`.
+
 ## Clone and Install
 
 Windows PowerShell:

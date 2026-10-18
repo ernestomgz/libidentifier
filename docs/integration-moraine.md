@@ -11,3 +11,10 @@ result = identify(apk_path, profiles=managed_profile_db)
 ```
 
 LibIdentifier returns component identities, version ambiguity, matched locators, unknown classes, coverage, and parser errors. Its optional `scan()`/`correlate()` APIs handle offline OSV-Scanner assessment. Moraine remains responsible for command/evidence persistence, application ownership decisions, exposure and reachability policy, advisory triage, and final findings.
+
+Stage 2 also supplies unattributed clusters, location-aware ownership assertions,
+typed relationships and per-capability status. Consume these through the public
+records described in [integration.md](integration.md#stage-2-evidence-clusters-and-relationships).
+Preserve ambiguity and distinguish published release declarations from observed
+code references; neither establishes build introduction or runtime execution.
+No Moraine adapter or integration is implemented in this repository.

@@ -13,7 +13,7 @@ from conftest import lib_classes, make_apk, make_dex
 def _catalog(path, ref, sha256):
     data = {
         "schema_version": 1,
-        "fingerprint_algorithm": "dex-shape-v1-defs+elf-identity-v1",
+        "fingerprint_algorithm": "dex-shape-v2-canonical+elf-identity-v1",
         "references": [
             {
                 "purl": "pkg:maven/example/libcatalog@1.0.0",

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "samples": [
+    {
+      "path": "fixtures/independent.apk",
+      "ground_truth_complete": true,
+      "components": [{"family_purl": "pkg:maven/example/demo", "version": "1.0"}],
+      "build": {"compiler": "record actual version", "transformation": "unoptimized", "keep_rules_sha256": null}
+    }
+  ]
+}

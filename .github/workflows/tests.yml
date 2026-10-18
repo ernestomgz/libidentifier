@@ -1,0 +1,68 @@
+name: Tests
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  contracts:
+    name: ${{ matrix.os }} / Python ${{ matrix.python }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.11', '3.12', '3.13']
+    runs-on: ${{ matrix.os }}
+    env:
+      LIBIDENTIFIER_REQUIRE_OSV: '1'
+      LIBIDENTIFIER_TEST_OSV: ${{ github.workspace }}/.tools/osv-scanner${{ runner.os == 'Windows' && '.exe' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install ".[dev]"
+      - name: Provision qualified scanner (maintenance only)
+        shell: python
+        run: |
+          import hashlib, os, pathlib, urllib.request
+          from libidentifier.vulnerabilities.runner import APPROVED_HASHES
+          target = pathlib.Path(os.environ['LIBIDENTIFIER_TEST_OSV'])
+          target.parent.mkdir(parents=True, exist_ok=True)
+          asset = 'osv-scanner_windows_amd64.exe' if os.name == 'nt' else 'osv-scanner_linux_amd64'
+          urllib.request.urlretrieve('https://github.com/google/osv-scanner/releases/download/v2.7.0/' + asset, target)
+          assert hashlib.sha256(target.read_bytes()).hexdigest() in APPROVED_HASHES[os.name]
+          target.chmod(0o755)
+      - name: Record installed runtime
+        shell: python
+        run: |
+          import hashlib, json, os, pathlib, platform, subprocess, sys
+          import importlib.metadata as metadata
+          import libidentifier
+          report = pathlib.Path('test-results/ci')
+          report.mkdir(parents=True, exist_ok=True)
+          scanner = pathlib.Path(os.environ['LIBIDENTIFIER_TEST_OSV'])
+          (report / 'runtime.json').write_text(json.dumps({
+              'revision': os.environ['GITHUB_SHA'],
+              'python': sys.version, 'platform': platform.platform(),
+              'libidentifier': metadata.version('libidentifier'),
+              'module': libidentifier.__file__,
+              'lief': metadata.version('lief'), 'pytest': metadata.version('pytest'),
+              'scanner_sha256': hashlib.sha256(scanner.read_bytes()).hexdigest(),
+              'scanner_version': subprocess.run([str(scanner), '--version'],
+                  check=True, capture_output=True, text=True, timeout=30).stdout.strip(),
+          }, indent=2), encoding='utf-8')
+      - name: Installed-package regression suite
+        run: python -m pytest -q -ra --junitxml=test-results/ci/regression.xml --basetemp .pytest_tmp/ci
+      - name: Installed command entry point
+        run: libidentifier --help
+      - name: Linux no-egress integration
+        if: runner.os == 'Linux'
+        shell: bash
+        run: sudo -E unshare -n "$(command -v python)" -m pytest -q -ra tests/test_offline_assessment.py tests/test_osv_convenience.py tests/test_stage2.py --junitxml=test-results/ci/offline.xml --basetemp .pytest_tmp/offline-ci
+      - name: Preserve qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qualification-${{ matrix.os }}-py${{ matrix.python }}
+          path: test-results/ci/
+          if-no-files-found: warn

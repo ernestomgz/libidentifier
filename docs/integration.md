@@ -4,6 +4,84 @@ LibIdentifier is an independent, offline Python package for identifying known th
 
 This document defines the public scan integration contract. Stage 3 may replace fingerprints, matchers and databases while preserving this contract. The technical specification describes the original design; verified current code and this guide take precedence over its illustrative examples and proposed thresholds.
 
+## Stage 2 evidence, clusters and relationships
+
+Existing `identify`, `inspect`, `scan`, `correlate`, profile-building and SBOM
+signatures remain supported. Identification and assessment schemas remain version
+1; the internal profile database is now version 2 and requires an explicit rebuild
+(see [profile database](profile-database.md)). The compact table remains a summary;
+the following complete categories are available in Python and JSON.
+
+| Additive `ScanResult` field | Public record and meaning |
+|---|---|
+| `analysis_runs` | `AnalysisRun(capability, status, producer, counts, limitations, errors)` |
+| `evidence_records` | `EvidenceRecord(id, kind, producer, location, details, provenance, limitations)` |
+| `ownership_assertions` | `OwnershipAssertion(location, status, component_ids, evidence_ids, limitations)` |
+| `unattributed_clusters` | `UnattributedCluster(id, class_count, members, namespace_hint, grouping_methods, origin, quality, limitations, supporting_relationship_ids)` |
+| `relationships` | `Relationship(id, type, source, target, evidence_ids, producer, strength, qualifiers, supporting_relationship_ids, limitations)` |
+
+All records are exported from `libidentifier`, support `to_dict`/`from_dict`, and
+ignore unknown additive fields. `Producer` contains `name` and `version`.
+`EntityRef` contains `kind`, `id`, optional `location` and optional `purl`.
+`CodeLocator.byte_offset` is an optional **absolute byte offset within the DEX
+member**, not a code-unit offset or APK ZIP offset. Method descriptors use
+`Lowner;->name(parameter-descriptors)return-descriptor`.
+
+Run statuses: `complete` means the documented scope was examined, including a
+zero-result run; `partial` means incomplete input, supported analysis limitations
+or unresolved evidence; `not_requested` means disabled/unavailable for that API
+operation. Consumers must tolerate future `not_supported`/`failed` values and
+unknown optional fields/types. Legacy JSON lacking these arrays deserializes to
+empty lists: analysis availability is unknown, not retrospectively complete.
+Run errors are local to that capability; inspect them as well as input errors.
+
+Ownership is `attributed`, `ambiguous` or `unattributed`. `component_ids` on an
+ambiguous assertion are candidates, not multiple confirmed owners. Existing
+`class_ownership_hints` remain available for supported unique attribution.
+Complete unknown output covers successfully extracted unassigned definitions,
+including ambiguous ones. Clusters always retain `origin="unknown"`; quality
+indicators are not calibrated library probabilities. Membership/IDs may change
+with algorithms. `class_count == len(members)` in current complete cluster output.
+
+Relationships preserve five meanings: `published_dependency`, `class_reference`,
+`static_call_reference`, `inheritance`, `interface_implementation`. A static call
+includes ordinary invocation kind (including `/range`) and declared target in
+evidence. Its target location is null when external or ambiguous. This does not
+prove actual execution or runtime dispatch. Structural references include field,
+parameter and return-type roles. Aggregate component edges retain the same type,
+use only unique embedded ownership and link supporting class/method edge IDs.
+
+Published edges have `reference_release` sources and `package` targets. Qualifiers
+preserve original/interpreted declarations, resolution status, component ID and
+`release_association="candidate"|"exact"`. An interpreted version may still be a
+constraint. Candidate release declarations are conditional; neither kind proves
+the APK's resolved dependency tree or whether a dependency was direct/transitive.
+Unresolved coordinates retain original expressions and never become fake PURLs.
+Missing POM metadata produces partial published coverage, not an empty declaration
+claim. No metadata is fetched during scanning.
+
+`IdentifyOptions.extract_relationships` (structural/published edges), `extract_calls` and
+`group_unknown_classes` default to true. Each can be disabled independently;
+structural relationships refine grouping only when extracted. Unknown-class
+output caps do not limit enrichment: cluster members and relationships remain
+complete over their declared scope. Inspect run counts/status for partial input.
+
+The corresponding `inspect`/`identify`/`scan` CLI switches are
+`--no-relationships`, `--no-calls`, `--no-grouping`; table layout is unchanged.
+Disabling enrichment can reduce runtime/memory while preserving identification.
+
+Supported canonical `META-INF/maven/<group>/<artifact>/pom.properties` declarations
+may establish a version only when they agree with identified code, an observed
+reference candidate and sufficient exact-descriptor evidence. Raw strings and
+unattributed metadata never establish a version. Conflicting declarations retain
+unknown versions and evidence. These modifiable declarations are not signed proof
+of artifact provenance. Stage 3 can improve this evidence through existing fields.
+
+`details`, `qualifiers`, quality indicators, producer names and diagnostic codes
+are extensible; preserve unfamiliar values without assuming a fixed key set.
+IDs are analysis-scoped, not stable cross-version keys. Public schema versioning
+is independent of fingerprints, producers, database schemas and actual findings.
+
 ## Installation and requirements
 
 Supported platforms: Windows and Linux. Python 3.11 or newer is required. Install from a reviewed checkout of this repository (there is no requirement for a public package registry release):

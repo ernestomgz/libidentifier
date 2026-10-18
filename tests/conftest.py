@@ -51,6 +51,9 @@ def make_dex(classes: list[dict]) -> bytes:
         super_desc = cls.get("superclass", "Ljava/lang/Object;")
         strings.add(super_desc)
         types.add(super_desc)
+        for interface in cls.get('interfaces', []):
+            strings.add(interface)
+            types.add(interface)
         if cls.get("source"):
             strings.add(cls["source"])
         for field in cls.get("fields", []):
@@ -94,6 +97,7 @@ def make_dex(classes: list[dict]) -> bytes:
     string_offsets = {}
     type_list_offsets = {}
     class_data_offsets = {}
+    code_offsets = {}
 
     def align4() -> None:
         while (data_off + len(data)) % 4:
@@ -117,6 +121,20 @@ def make_dex(classes: list[dict]) -> bytes:
         else:
             type_list_offsets[(ret, params)] = 0
     for cls in classes_sorted:
+        if cls.get('interfaces'):
+            align4()
+            type_list_offsets[cls['descriptor']] = data_off + len(data)
+            data.extend(struct.pack('<I', len(cls['interfaces'])))
+            for interface in cls['interfaces']:
+                data.extend(struct.pack('<H', type_idx[interface]))
+        for method in cls.get('methods', []):
+            if 'code' in method:
+                align4()
+                key = (cls['descriptor'], method.get('return', 'V'), tuple(method.get('params', [])), method['name'])
+                code_offsets[key] = data_off + len(data)
+                words = method['code'](method_idx) if callable(method['code']) else method['code']
+                data.extend(struct.pack('<HHHHII', 8, 0, 5, 0, 0, len(words)))
+                data.extend(struct.pack('<'+'H'*len(words), *words))
         class_data_offsets[cls["descriptor"]] = data_off + len(data)
         cls_fields = [(cls["descriptor"], f["type"], f["name"], f.get("flags", ACC_PRIVATE)) for f in cls.get("fields", [])]
         cls_methods = [
@@ -140,7 +158,7 @@ def make_dex(classes: list[dict]) -> bytes:
             idx = method_idx[(method[0], method[1], method[2], method[3])]
             data.extend(uleb(idx - last))
             data.extend(uleb(method[4]))
-            data.extend(uleb(0))
+            data.extend(uleb(code_offsets.get((method[0],method[1],method[2],method[3]), 0)))
             last = idx
     align4()
     map_off = data_off + len(data)
@@ -156,11 +174,13 @@ def make_dex(classes: list[dict]) -> bytes:
         map_items.append((0x0005, len(methods_sorted), method_ids_off))
     if classes_sorted:
         map_items.append((0x0006, len(classes_sorted), class_defs_off))
-    type_list_count = sum(1 for p in protos_sorted if p[1])
+    type_list_count = sum(1 for p in protos_sorted if p[1]) + sum(bool(c.get('interfaces')) for c in classes_sorted)
     if type_list_count:
         map_items.append((0x1001, type_list_count, min(v for v in type_list_offsets.values() if v)))
     if class_data_offsets:
         map_items.append((0x2000, len(class_data_offsets), min(class_data_offsets.values())))
+    if code_offsets:
+        map_items.append((0x2001, len(code_offsets), min(code_offsets.values())))
     map_items.append((0x2002, len(strings_sorted), min(string_offsets.values())))
     map_items.append((0x1000, 1, map_off))
     data.extend(struct.pack("<I", len(map_items)))
@@ -201,7 +221,7 @@ def make_dex(classes: list[dict]) -> bytes:
                 type_idx[cls["descriptor"]],
                 cls.get("flags", ACC_PUBLIC | ACC_ABSTRACT),
                 type_idx[cls.get("superclass", "Ljava/lang/Object;")],
-                0,
+                type_list_offsets.get(cls['descriptor'], 0),
                 source_idx,
                 0,
                 class_data_offsets[cls["descriptor"]],

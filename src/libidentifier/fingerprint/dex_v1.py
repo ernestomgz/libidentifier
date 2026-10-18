@@ -1,4 +1,4 @@
-"""dex-shape-v1 canonical class fingerprints."""
+"""dex-shape-v2 canonical class fingerprints (historical module path retained)."""
 
 from __future__ import annotations
 
@@ -85,7 +85,7 @@ def digest_class(feature: ClassFeature) -> str:
     payload = json.dumps(class_shape_map(feature), sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
         "utf-8"
     )
-    return hashlib.sha256(b"dex-shape-v1\0" + payload).hexdigest()
+    return hashlib.sha256(b"dex-shape-v2\0" + payload).hexdigest()
 
 
 def digest_counts(features: list[ClassFeature]) -> Counter[str]:

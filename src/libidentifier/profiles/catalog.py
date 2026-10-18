@@ -21,6 +21,8 @@ class CatalogReference:
     path: str | None = None
     license: str | None = None
     notes: str | None = None
+    pom_url: str | None = None
+    pom_sha256: str | None = None
 
     @property
     def version(self) -> str:
@@ -95,7 +97,7 @@ def load_catalog(path: str | Path) -> ReferenceCatalog:
     if algorithm != FINGERPRINT_ALGORITHM:
         raise ProfileError("catalog fingerprint algorithm is incompatible")
     refs = []
-    seen: set[str] = set()
+    seen: set[tuple[str, str]] = set()
     for item in data.get("references", []):
         purl = item.get("purl")
         sha256 = item.get("sha256")
@@ -103,9 +105,12 @@ def load_catalog(path: str | Path) -> ReferenceCatalog:
             raise ProfileError("catalog reference purl must be a versioned string")
         if not isinstance(sha256, str) or len(sha256) != 64:
             raise ProfileError(f"catalog reference has invalid sha256: {purl}")
-        if purl in seen:
-            raise ProfileError(f"duplicate catalog purl: {purl}")
-        seen.add(purl)
+        if (purl, sha256.lower()) in seen:
+            raise ProfileError(f"duplicate catalog artifact: {purl}")
+        seen.add((purl, sha256.lower()))
+        pom_url, pom_sha = item.get('pom_url'), item.get('pom_sha256')
+        if bool(pom_url) != bool(pom_sha) or (pom_sha and (len(pom_sha) != 64 or any(c not in '0123456789abcdefABCDEF' for c in pom_sha))):
+            raise ProfileError('POM URL requires a pinned SHA-256')
         family_id_from_purl(purl)
         ref = CatalogReference(
             purl=purl,
@@ -115,6 +120,8 @@ def load_catalog(path: str | Path) -> ReferenceCatalog:
             path=item.get("path"),
             license=item.get("license"),
             notes=item.get("notes"),
+            pom_url=pom_url,
+            pom_sha256=pom_sha.lower() if pom_sha else None,
         )
         resolve_reference_url(ref)
         refs.append(ref)

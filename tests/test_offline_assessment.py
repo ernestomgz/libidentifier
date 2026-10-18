@@ -52,7 +52,10 @@ def local_db(tmp_path):
 
 @pytest.fixture
 def qualified_options(local_db):
-    if not EXE.is_file(): pytest.skip('qualified OSV executable not installed for integration tests')
+    if not EXE.is_file():
+        if os.environ.get('LIBIDENTIFIER_REQUIRE_OSV') == '1':
+            pytest.fail('Required qualified OSV executable is missing')
+        pytest.skip('qualified OSV executable not installed for integration tests')
     return VulnerabilityOptions(EXE, local_db)
 
 

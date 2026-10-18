@@ -12,9 +12,12 @@ samples/
 test-results/d8-wrapper.cmd
 test-results/reference-artifacts/
 test-results/tmp/
+test-results/ci/
+.tools/
 
 # Local Python environments and tooling caches.
 .venv/
+.development-deps/
 venv/
 .mypy_cache/
 .ruff_cache/

@@ -26,8 +26,15 @@ class IdentifyOptions:
     high_min_runner_up_delta: float = 0.15
     min_material_runner_overlap: float = 0.25
     max_version_candidates: int = 12
+    extract_relationships: bool = True
+    extract_calls: bool = True
+    group_unknown_classes: bool = True
+
 
     def __post_init__(self):
+        for name in ('extract_relationships', 'extract_calls', 'group_unknown_classes'):
+            if not isinstance(getattr(self, name), bool):
+                raise ValueError(f'{name} must be boolean')
         for name in ("max_archive_members", "max_member_uncompressed_bytes",
                      "max_total_selected_uncompressed_bytes", "max_compression_ratio",
                      "max_directory_files", "max_directory_depth"):
@@ -42,6 +49,6 @@ class IdentifyOptions:
                 raise ValueError(f"{name} must be a non-negative integer")
 
 
-FINGERPRINT_ALGORITHM = "dex-shape-v1-defs+elf-identity-v1"
+FINGERPRINT_ALGORITHM = "dex-shape-v2-canonical+elf-identity-v1"
 SCHEMA_VERSION = 1
-DATABASE_SCHEMA_VERSION = 1
+DATABASE_SCHEMA_VERSION = 2

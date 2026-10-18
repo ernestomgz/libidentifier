@@ -1,0 +1,166 @@
+{
+  "date": "2026-10-16",
+  "qualification": "Preliminary performance pilot under concurrent test load; no complete ground truth",
+  "platform": "win32",
+  "quality": {
+    "family_true_positive": 0,
+    "family_false_positive": 0,
+    "family_false_negative": 0,
+    "exact_version_predictions": 0,
+    "correct_exact_versions": 0,
+    "ground_truth_versioned_components": 0,
+    "family_precision": null,
+    "family_recall": null,
+    "exact_version_precision": null,
+    "exact_version_coverage": null
+  },
+  "samples": [
+    {
+      "sample": "allsafe-1.6.apk",
+      "sha256": "d6792d6634a033f048f935f1269179d3c27b859c4c34b1e9e5b008a88375efd9",
+      "python": "3.12.14",
+      "lief": "0.17.1-fe54643f",
+      "profile_database": {
+        "id": "local",
+        "version": "2",
+        "sha256": "8a3007637f27e07b3ef9e1a237231828c864d437b81cc3d3bce463568ee5829f",
+        "generated_at": "2026-10-16 17:56:31",
+        "profile_count": 8
+      },
+      "seconds": 97.88822880000225,
+      "peak_rss_bytes": 1044201472,
+      "classes": 12077,
+      "unknown": 11750,
+      "clusters": 310,
+      "relationships": 441841,
+      "components": [
+        {
+          "family_purl": "pkg:maven/com.squareup.okhttp3/okhttp",
+          "version": null
+        },
+        {
+          "family_purl": "pkg:maven/com.scottyab/rootbeer-lib",
+          "version": null
+        }
+      ]
+    },
+    {
+      "sample": "AndroGoat-2.0.1.apk",
+      "sha256": "3e6f6b538b82874dd94c0d8cdadd69ba54d49b59d2c7eb055073892e8a4fc0e0",
+      "python": "3.12.14",
+      "lief": "0.17.1-fe54643f",
+      "profile_database": {
+        "id": "local",
+        "version": "2",
+        "sha256": "8a3007637f27e07b3ef9e1a237231828c864d437b81cc3d3bce463568ee5829f",
+        "generated_at": "2026-10-16 17:56:31",
+        "profile_count": 8
+      },
+      "seconds": 72.52333990001353,
+      "peak_rss_bytes": 686854144,
+      "classes": 7448,
+      "unknown": 7139,
+      "clusters": 247,
+      "relationships": 272241,
+      "components": [
+        {
+          "family_purl": "pkg:maven/com.squareup.okhttp3/okhttp",
+          "version": null
+        }
+      ]
+    },
+    {
+      "sample": "diva.apk",
+      "sha256": "390f1cd8b4745c7648009128011c63bbdf70f9719c8bda2420bdbb45f83a7c72",
+      "python": "3.12.14",
+      "lief": "0.17.1-fe54643f",
+      "profile_database": {
+        "id": "local",
+        "version": "2",
+        "sha256": "8a3007637f27e07b3ef9e1a237231828c864d437b81cc3d3bce463568ee5829f",
+        "generated_at": "2026-10-16 17:56:31",
+        "profile_count": 8
+      },
+      "seconds": 28.564723100003903,
+      "peak_rss_bytes": 584437760,
+      "classes": 6493,
+      "unknown": 6493,
+      "clusters": 187,
+      "relationships": 227619,
+      "components": []
+    },
+    {
+      "sample": "InjuredAndroid-1.0.12-release.apk",
+      "sha256": "b6b8d2dbd7a428b7754e6e537ba5790c35a73253533454e0768dbf1520a7ed15",
+      "python": "3.12.14",
+      "lief": "0.17.1-fe54643f",
+      "profile_database": {
+        "id": "local",
+        "version": "2",
+        "sha256": "8a3007637f27e07b3ef9e1a237231828c864d437b81cc3d3bce463568ee5829f",
+        "generated_at": "2026-10-16 17:56:31",
+        "profile_count": 8
+      },
+      "seconds": 13.60054549999768,
+      "peak_rss_bytes": 364896256,
+      "classes": 3798,
+      "unknown": 3798,
+      "clusters": 73,
+      "relationships": 133009,
+      "components": []
+    },
+    {
+      "sample": "InsecureBankv2-2.3.1.apk",
+      "sha256": "b18af2a0e44d7634bbcdf93664d9c78a2695e050393fcfbb5e8b91f902d194a4",
+      "python": "3.12.14",
+      "lief": "0.17.1-fe54643f",
+      "profile_database": {
+        "id": "local",
+        "version": "2",
+        "sha256": "8a3007637f27e07b3ef9e1a237231828c864d437b81cc3d3bce463568ee5829f",
+        "generated_at": "2026-10-16 17:56:31",
+        "profile_count": 8
+      },
+      "seconds": 29.47299799999746,
+      "peak_rss_bytes": 491945984,
+      "classes": 6529,
+      "unknown": 6529,
+      "clusters": 40,
+      "relationships": 186606,
+      "components": []
+    },
+    {
+      "sample": "ovaa-1.0.0-app-debug.apk",
+      "sha256": "073d87a2bcbfcd539146854681d4968960dbee0209673b17cdbe1aaed6705233",
+      "python": "3.12.14",
+      "lief": "0.17.1-fe54643f",
+      "profile_database": {
+        "id": "local",
+        "version": "2",
+        "sha256": "8a3007637f27e07b3ef9e1a237231828c864d437b81cc3d3bce463568ee5829f",
+        "generated_at": "2026-10-16 17:56:31",
+        "profile_count": 8
+      },
+      "seconds": 50.045387600010145,
+      "peak_rss_bytes": 663261184,
+      "classes": 7907,
+      "unknown": 7438,
+      "clusters": 424,
+      "relationships": 264362,
+      "components": [
+        {
+          "family_purl": "pkg:maven/com.google.code.gson/gson",
+          "version": null
+        },
+        {
+          "family_purl": "pkg:maven/com.squareup.okhttp3/okhttp",
+          "version": null
+        },
+        {
+          "family_purl": "pkg:maven/com.squareup.retrofit2/retrofit",
+          "version": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "tool_name": "libidentifier",
+  "tool_version": "0.1.0",
+  "fingerprint_algorithm": "dex-shape-v1-defs+elf-identity-v1",
+  "profile_database": {},
+  "input": {"path": "fixture.apk", "format": "apk", "sha256": "legacy", "size": 100},
+  "analyzed_files": [],
+  "frameworks_detected": [],
+  "components": [],
+  "class_ownership_hints": [],
+  "unknown_classes": [{"container": "fixture.apk", "member": "classes.dex", "class_descriptor": "Lsample/C;"}],
+  "coverage": {"dex": "analyzed"},
+  "errors": []
+}

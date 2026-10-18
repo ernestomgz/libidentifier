@@ -35,6 +35,10 @@ class Inventory:
     errors: list[AnalysisError] = field(default_factory=list)
     coverage: CoverageRecord = field(default_factory=CoverageRecord)
     selected_bytes: int = 0
+    ownership_assertions: list = field(default_factory=list)
+    dex_tables: dict = field(default_factory=dict)
+    version_metadata: list = field(default_factory=list)
+    metadata_issues: list = field(default_factory=list)
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -78,7 +82,7 @@ def _coverage(inv: Inventory) -> None:
     inv.coverage = CoverageRecord(
         dex="partial" if dex_errors else ("analyzed" if dex_seen else "absent"),
         elf="partial" if elf_errors else ("analyzed" if elf_seen else "absent"),
-        metadata="partial" if inv.frameworks_detected else "absent",
+        metadata="partial" if inv.frameworks_detected or inv.version_metadata or inv.metadata_issues else "absent",
         analyzed_count=analyzed_count,
         skipped_count=skipped,
         limitations=(["Some input members were skipped; absence of detections is inconclusive"] if incomplete else [])
@@ -92,8 +96,11 @@ def _analyze_blob(inv: Inventory, data: bytes, *, fmt: str, container: str, memb
     record = ArtifactRecord(member=member, format=fmt, sha256=digest, status="analyzed", path=path, container=container)
     if fmt == "dex":
         try:
-            classes = parse_dex(data, container=container, member=member, sha256=digest)
+            from .extractors.dex_tables import DexTables
+            tables = DexTables(data)
+            classes = parse_dex(data, container=container, member=member, sha256=digest, tables=tables)
             inv.dex_classes.extend(classes)
+            inv.dex_tables[(container, member)] = tables
             inv.analyzed_files.append(record)
         except Exception as exc:
             inv.analyzed_files.append(replace(record, status="failed"))
@@ -136,6 +143,15 @@ def _scan_file(path: Path, options: IdentifyOptions, *, top_input: Path | None =
         for member in members:
             if member.format in {"dex", "elf"}:
                 _analyze_blob(inv, member.data, fmt=member.format, container=str(path), member=member.name, path=None)
+            elif member.format == 'metadata':
+                from .extractors.version_metadata import read_properties
+                from .models import CodeLocator
+                props = read_properties(member.data, member.name)
+                if props:
+                    inv.version_metadata.append((CodeLocator(str(path), member.name, sha256=member.sha256), props))
+                else:
+                    inv.metadata_issues.append(AnalysisError('version_metadata_unsupported', member.name,
+                        'Unsupported or inconsistent Maven properties; no version inferred'))
         inv.frameworks_detected = detect_frameworks(members, inv.dex_classes, inv.elf_features, container=str(path))
         inv.selected_bytes = sum(len(member.data) for member in members)
     _coverage(inv)
@@ -149,6 +165,9 @@ def _merge(base: Inventory, child: Inventory) -> None:
     base.frameworks_detected.extend(child.frameworks_detected)
     base.errors.extend(child.errors)
     base.selected_bytes += child.selected_bytes
+    base.dex_tables.update(child.dex_tables)
+    base.version_metadata.extend(child.version_metadata)
+    base.metadata_issues.extend(child.metadata_issues)
 
 
 def inspect_path(path, options: IdentifyOptions) -> Inventory:

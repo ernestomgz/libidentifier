@@ -59,6 +59,7 @@ class CodeLocator:
     class_descriptor: str | None = None
     method_descriptor: str | None = None
     sha256: str | None = None
+    byte_offset: int | None = None  # Absolute byte offset in the DEX member.
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -211,6 +212,126 @@ class ProfileDatabaseRecord:
         return cls(**_known(cls, data))
 
 
+class Record:
+    def to_dict(self):
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(**_known(cls, data))
+
+
+@dataclass(frozen=True)
+class Producer(Record):
+    name: str
+    version: str
+
+
+@dataclass(frozen=True)
+class AnalysisRun(Record):
+    capability: str
+    status: str
+    producer: Producer
+    counts: dict[str, int] = field(default_factory=dict)
+    limitations: list[str] = field(default_factory=list)
+    errors: list[AnalysisError] = field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, data):
+        d = _known(cls, data)
+        d['producer'] = Producer.from_dict(data['producer'])
+        d['errors'] = [AnalysisError.from_dict(x) for x in data.get('errors', [])]
+        return cls(**d)
+
+
+@dataclass(frozen=True)
+class EvidenceRecord(Record):
+    id: str
+    kind: str
+    producer: Producer
+    location: CodeLocator | None = None
+    details: dict[str, Any] = field(default_factory=dict)
+    provenance: dict[str, Any] = field(default_factory=dict)
+    limitations: list[str] = field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, data):
+        d = _known(cls, data)
+        d['producer'] = Producer.from_dict(data['producer'])
+        d['location'] = CodeLocator.from_dict(data['location']) if data.get('location') else None
+        return cls(**d)
+
+
+@dataclass(frozen=True)
+class EntityRef(Record):
+    kind: str
+    id: str
+    location: CodeLocator | None = None
+    purl: str | None = None
+
+    @classmethod
+    def from_dict(cls, data):
+        d = _known(cls, data)
+        d['location'] = CodeLocator.from_dict(data['location']) if data.get('location') else None
+        return cls(**d)
+
+
+@dataclass(frozen=True)
+class OwnershipAssertion(Record):
+    location: CodeLocator
+    status: str
+    component_ids: list[str]
+    evidence_ids: list[str] = field(default_factory=list)
+    limitations: list[str] = field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, data):
+        d = _known(cls, data)
+        d['location'] = CodeLocator.from_dict(data['location'])
+        return cls(**d)
+
+
+@dataclass(frozen=True)
+class Relationship(Record):
+    id: str
+    type: str
+    source: EntityRef
+    target: EntityRef
+    evidence_ids: list[str]
+    producer: Producer
+    strength: str = 'observed'
+    qualifiers: dict[str, Any] = field(default_factory=dict)
+    supporting_relationship_ids: list[str] = field(default_factory=list)
+    limitations: list[str] = field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, data):
+        d = _known(cls, data)
+        for name in ('source', 'target'):
+            d[name] = EntityRef.from_dict(data[name])
+        d['producer'] = Producer.from_dict(data['producer'])
+        return cls(**d)
+
+
+@dataclass(frozen=True)
+class UnattributedCluster(Record):
+    id: str
+    class_count: int
+    members: list[CodeLocator]
+    namespace_hint: str | None
+    grouping_methods: list[str]
+    origin: str = 'unknown'
+    quality: dict[str, Any] = field(default_factory=dict)
+    limitations: list[str] = field(default_factory=list)
+    supporting_relationship_ids: list[str] = field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, data):
+        d = _known(cls, data)
+        d['members'] = [CodeLocator.from_dict(x) for x in data['members']]
+        return cls(**d)
+
+
 @dataclass(frozen=True)
 class ScanResult:
     schema_version: int
@@ -226,6 +347,11 @@ class ScanResult:
     unknown_classes: list[CodeLocator]
     coverage: CoverageRecord
     errors: list[AnalysisError]
+    analysis_runs: list[AnalysisRun] = field(default_factory=list)
+    evidence_records: list[EvidenceRecord] = field(default_factory=list)
+    ownership_assertions: list[OwnershipAssertion] = field(default_factory=list)
+    unattributed_clusters: list[UnattributedCluster] = field(default_factory=list)
+    relationships: list[Relationship] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -242,6 +368,8 @@ class ScanResult:
             "unknown_classes": [x.to_dict() for x in self.unknown_classes],
             "coverage": self.coverage.to_dict(),
             "errors": [x.to_dict() for x in self.errors],
+            **{name: [x.to_dict() for x in getattr(self, name)] for name in (
+                'analysis_runs', 'evidence_records', 'ownership_assertions', 'unattributed_clusters', 'relationships')},
         }
 
     @classmethod
@@ -263,6 +391,11 @@ class ScanResult:
             unknown_classes=[CodeLocator.from_dict(x) for x in data.get("unknown_classes", [])],
             coverage=CoverageRecord.from_dict(data["coverage"]),
             errors=[AnalysisError.from_dict(x) for x in data.get("errors", [])],
+            analysis_runs=[AnalysisRun.from_dict(x) for x in data.get('analysis_runs', [])],
+            evidence_records=[EvidenceRecord.from_dict(x) for x in data.get('evidence_records', [])],
+            ownership_assertions=[OwnershipAssertion.from_dict(x) for x in data.get('ownership_assertions', [])],
+            unattributed_clusters=[UnattributedCluster.from_dict(x) for x in data.get('unattributed_clusters', [])],
+            relationships=[Relationship.from_dict(x) for x in data.get('relationships', [])],
         )
 
     def to_json(self) -> str:

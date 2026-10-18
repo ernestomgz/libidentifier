@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "fingerprint_algorithm": "dex-shape-v1-defs+elf-identity-v1",
+  "fingerprint_algorithm": "dex-shape-v2-canonical+elf-identity-v1",
   "references": [
     {
       "purl": "pkg:maven/com.google.code.gson/gson@2.11.0",

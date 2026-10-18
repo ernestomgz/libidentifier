@@ -2,9 +2,20 @@
 
 Development status: pre-production prototype, not ready for production deployment. Review the documented coverage and resource-safety limitations before integration.
 
+Development: [roadmap](docs/development/roadmap.md),
+[Stage 2 acceptance](docs/development/stages/stage-2.md),
+[contributor entry point](AGENTS.md). Historical proposals are archived; the
+[integration guide](docs/integration.md) is the public contract authority.
+
 LibIdentifier is a small offline Python package and CLI for identifying known compiled Android and native components from locally built reference profiles. Stage 1 supports APK/ZIP, standalone DEX, standalone ELF, and directories containing those files.
 
 It uses LIEF for DEX and ELF parsing, SQLite for local reference profiles, and standard-library archive handling. Identification never calls the network or executes submitted binaries. Optional advisory assessment invokes a verified local OSV-Scanner in full offline mode. The CLI can download a missing Maven advisory database during setup; `--offline` prohibits that download.
+
+Stage 2 adds unattributed code clusters, typed code/component relationships,
+published reference dependency declarations, and analysis evidence/coverage.
+Profile schema 2 requires an explicit rebuild; public JSON remains schema 1.
+Complete enrichment has a measurable memory/runtime cost and can be disabled
+selectively; see the [integration guide](docs/integration.md).
 
 ## Install
 
@@ -57,7 +68,7 @@ export_cyclonedx(result, Path("components.cdx.json"))
 
 ## What Stage 1 Identifies
 
-- DEX class-shape fingerprints using `dex-shape-v1`.
+- DEX class-shape fingerprints using canonical `dex-shape-v2` (old profiles require an explicit rebuild).
 - Exact ELF identity using `elf-identity-v1`, primarily whole-file SHA-256.
 - Multiple DEX files in one APK.
 - Multiple libraries in the same DEX when their reference shapes are strong and non-overlapping.

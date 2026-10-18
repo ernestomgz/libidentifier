@@ -111,7 +111,8 @@ def test_schema_contract_and_additive_fields(tmp_path, demo_db):
     data = r.to_dict()
     assert set(data) == {'schema_version', 'tool_name', 'tool_version', 'fingerprint_algorithm',
         'profile_database', 'input', 'analyzed_files', 'frameworks_detected', 'components',
-        'class_ownership_hints', 'unknown_classes', 'coverage', 'errors'}
+        'class_ownership_hints', 'unknown_classes', 'coverage', 'errors',
+        'analysis_runs', 'evidence_records', 'ownership_assertions', 'unattributed_clusters', 'relationships'}
     assert data['schema_version'] == 1
     c = data['components'][0]
     assert set(c) == {'component_id', 'name', 'ecosystem', 'purl', 'version', 'version_candidates',
