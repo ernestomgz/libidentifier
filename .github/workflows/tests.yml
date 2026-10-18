@@ -14,7 +14,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       LIBIDENTIFIER_REQUIRE_OSV: '1'
-      LIBIDENTIFIER_TEST_OSV: ${{ github.workspace }}/.tools/osv-scanner${{ runner.os == 'Windows' && '.exe' || '' }}
+      LIBIDENTIFIER_TEST_OSV: ${{ github.workspace }}/.tools/osv-scanner${{ matrix.os == 'windows-latest' && '.exe' || '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

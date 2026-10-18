@@ -92,6 +92,20 @@ ARM hardware, bare-metal Linux and hosted GitHub runners remain unqualified.
 No hosted CI run was triggered for this uncommitted checkout. The completed local
 matrix is separate evidence from the defined hosted Windows/Linux matrix.
 
+### Workflow expression correction after first push
+
+GitHub rejected the first published workflow before any matrix jobs ran:
+`runner.os` was used in job-level `env`, where the runner context is unavailable.
+The scanner suffix now uses `matrix.os == 'windows-latest'`, preserving `.exe`
+on Windows and no suffix on Linux. This follows GitHub's
+[context availability rules](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#context-availability).
+
+The official checksum-verified actionlint 1.7.12 binary reproduced the original
+context error and accepted the corrected workflow with no diagnostics. This is
+workflow validation, not a hosted regression run. No Python implementation changed;
+the recorded local matrix remains applicable. Hosted execution awaits the fix
+being pushed. Workflow maintenance instructions now require actionlint.
+
 Reproduction: install dependencies, set `PYTHONPATH=src` when not installed,
 `LIBIDENTIFIER_REQUIRE_OSV=1`, `LIBIDENTIFIER_TEST_OSV` to the platform executable,
 and `LIBIDENTIFIER_TEST_PROFILES` to a schema-2 rebuild. Run

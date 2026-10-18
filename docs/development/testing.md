@@ -28,6 +28,10 @@ editable source paths) and retains runtime provenance and JUnit results, includi
 skip reasons, as one artifact per environment. Linux repeats the offline subset
 inside a network namespace. The workflow supports manual dispatch after it has
 been published; a workflow definition is not evidence of an executed hosted run.
+Before publishing workflow edits, run `actionlint .github/workflows/tests.yml`.
+Python compilation and YAML parsing alone do not validate Actions expression
+contexts. Job-level environment expressions must use contexts available at that
+scope (for example `matrix.os`); `runner.os` is available in step conditions.
 Historical reports under `test-results/` are evidence for their recorded checkout.
 The [Stage 2 checklist](stages/stage-2.md) owns acceptance status.
 
