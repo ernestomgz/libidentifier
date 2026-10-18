@@ -130,9 +130,34 @@ cached binary bytes in place of network downloads; official URLs and checksums
 were independently checked against release metadata. Full hosted qualification
 still requires pushing this correction and completing the matrix.
 
+### Fresh-checkout temporary-directory correction
+
+The supplied run #3 log reached pytest but failed fixture setup because the
+ignored `.pytest_tmp` parent was absent. Pytest's explicit nested basetemp paths
+do not create that parent. Existing local directories had masked this condition.
+Workflow initialization now creates `.pytest_tmp` before the regression and
+offline commands; application code and test selections are unchanged.
+
+Tracked-files-only Git archives on Windows and WSL Linux began without ignored
+directories. On both platforms, the old initialization reproduced the same
+`FileNotFoundError` in one fixture-driven test. After executing the corrected
+initialization, the exact full regression command passed on Python 3.11.17 with
+LIEF 0.17.1, pytest 9.1.1 and required native OSV 2.7.0:
+
+- Windows: 176 passed, 8 skipped (113.52 s).
+- WSL Linux: 175 passed, 8 skipped (387.42 s).
+- WSL Linux `unshare -n` offline command: 58 passed, 1 skipped (153.54 s).
+
+The eight skips are the six optional real-APK regressions, Flutter sample
+inspection and published Maven snapshot check; those external assets are absent
+from a fresh checkout. The offline command skipped only the absent published
+snapshot. No required native OSV check was skipped. Actionlint
+1.7.12 accepts the corrected workflow. Hosted matrix completion remains pending.
+
 Reproduction: install dependencies, set `PYTHONPATH=src` when not installed,
 `LIBIDENTIFIER_REQUIRE_OSV=1`, `LIBIDENTIFIER_TEST_OSV` to the platform executable,
-and `LIBIDENTIFIER_TEST_PROFILES` to a schema-2 rebuild. Run
+and `LIBIDENTIFIER_TEST_PROFILES` to a schema-2 rebuild. Create `.pytest_tmp`
+before using the nested basetemp paths below. Run
 `python -m pytest -q --basetemp .pytest_tmp/qualification`. Under a privileged
 Linux network namespace run the same interpreter with
 `tests/test_offline_assessment.py tests/test_osv_convenience.py tests/test_stage2.py`.

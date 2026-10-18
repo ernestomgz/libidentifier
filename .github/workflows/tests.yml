@@ -26,6 +26,7 @@ jobs:
           import json, os, pathlib, platform, sys
           report = pathlib.Path('test-results/ci')
           report.mkdir(parents=True, exist_ok=True)
+          pathlib.Path('.pytest_tmp').mkdir(parents=True, exist_ok=True)
           (report / 'bootstrap.json').write_text(json.dumps({
               'revision': os.environ['GITHUB_SHA'],
               'python': sys.version, 'platform': platform.platform(),

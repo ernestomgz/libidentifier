@@ -32,6 +32,9 @@ Before publishing workflow edits, run `actionlint .github/workflows/tests.yml`.
 Python compilation and YAML parsing alone do not validate Actions expression
 contexts. Job-level environment expressions must use contexts available at that
 scope (for example `matrix.os`); `runner.os` is available in step conditions.
+Run workflow commands from a fresh checkout without ignored local directories.
+The initialization step creates `.pytest_tmp` before pytest uses nested
+`--basetemp` paths; pytest does not create a missing parent for that option.
 CI writes bootstrap evidence before package installation and records scanner
 download/checksum errors before re-raising them. Qualification downloads use
 workflow-local publisher checksum pins; runtime scanner acceptance remains based
