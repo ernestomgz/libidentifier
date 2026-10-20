@@ -1,4 +1,4 @@
-"""dex-shape-v2 canonical class fingerprints (historical module path retained)."""
+"""dex-shape-v2 canonical class fingerprints."""
 
 from __future__ import annotations
 

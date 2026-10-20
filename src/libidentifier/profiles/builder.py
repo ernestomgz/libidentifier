@@ -16,8 +16,8 @@ from ..detect import detect_bytes, detect_file
 from ..errors import ProfileBuildError
 from ..extractors.dex import parse_dex
 from ..extractors.elf import parse_elf
-from ..fingerprint.dex_v1 import digest_counts
-from ..fingerprint.dex_v1 import digest_class
+from ..fingerprint.dex_v2 import digest_counts
+from ..fingerprint.dex_v2 import digest_class
 from ..fingerprint.elf_v1 import identity_record
 from ..models import ProfileBuildResult
 from ..purl import reference_coordinates

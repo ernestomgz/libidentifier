@@ -2,7 +2,7 @@
 
 Checks began 2026-10-16; finalization 2026-10-18 (Europe/Madrid).
 Development foundations, not production accuracy
-qualification. The [Stage 2 checklist](../docs/development/stages/stage-2.md) owns
+qualification. The [Stage 2 checklist](../stages/stage-2.md) owns
 milestone status; this report records executed evidence.
 
 ## Implementation
@@ -162,6 +162,15 @@ before using the nested basetemp paths below. Run
 Linux network namespace run the same interpreter with
 `tests/test_offline_assessment.py tests/test_osv_convenience.py tests/test_stage2.py`.
 Environment-specific local runtime/dependency directories remain ignored.
+
+## Hosted qualification follow-up
+
+Hosted follow-up: [run 39159541566](https://github.com/ernestomgz/libidentifier/actions/runs/39159541566)
+completed successfully for commit `7cd10193fb99ba461b8d444521339a4b0f8839f5`.
+The public run/job API confirms all six Windows/Linux Python 3.11/3.12/3.13 jobs
+passed. This supersedes the earlier pending hosted-run status in this historical
+report. Consumer-specific integration qualification belongs in each consuming
+repository.
 
 ## Performance pilot and remaining limits
 

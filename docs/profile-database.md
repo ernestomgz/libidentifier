@@ -23,6 +23,10 @@ without changing external models. Release IDs no longer depend on artifact bytes
 
 `profiles build` imports a trusted local DEX or ELF directly. JAR/AAR profile generation requires explicit local D8 and, when needed, an explicit local `android.jar`. Identification opens the database read-only and refuses incompatible schema or fingerprint versions.
 
+The database schema (2), catalog/build-manifest format (1) and public JSON schema
+(1) are independent version numbers. The current DEX implementation is
+`fingerprint/dex_v2.py`; ELF remains `elf_v1.py`.
+
 The profile database is a generated artifact. It is separate from the source package and should record provenance and source hashes for trusted references.
 
 Schema-1 databases and old fingerprint bundles are rejected, never silently

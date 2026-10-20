@@ -1,7 +1,7 @@
 # Stage 2 functional foundations
 
 Status: M0–M4 implementation and local native/offline qualification complete.
-See the [validation report](../../../test-results/stage2-validation.md) for exact
+See the [validation report](../validation/stage2-validation.md) for exact
 commands, environments and remaining hosted-CI scope.
 Optional OSV provisioning/discovery/fallback and compact CLI behavior are preserved.
 
@@ -29,12 +29,15 @@ Tests: `tests/test_stage2.py` plus the existing native extraction, ownership,
 profile, OSV, renderer and compatibility suites. The benchmark pilot has no
 complete ground truth; production accuracy remains a Stage 3 gate. The local
 Python 3.11/3.12/3.13 Windows/WSL matrix passed; the hosted CI matrix retains
-runtime/JUnit evidence when executed. Context and scanner-bootstrap errors were
-corrected; the next hosted run exposed a missing `.pytest_tmp` parent during
-fixture setup. Workflow initialization now creates it explicitly. Fresh-checkout
-qualification is recorded in the validation report; hosted test qualification
-remains pending.
+runtime/JUnit evidence. Context, scanner-bootstrap and fresh-checkout temporary
+directory corrections are recorded in the validation report. All six hosted
+jobs passed at `7cd1019`. Application-specific adapters and their qualification
+records belong in the consuming repositories.
 
-Moraine integration is eligible only after required gates pass. A CI definition
+Consumer integration follows the [initial distribution gates](../release-readiness.md). A CI definition
 alone does not constitute platform validation. No full Maven resolver, call
 graph, runtime dispatch, data-flow or R8 generation is required in Stage 2.
+
+Repository cleanup and schema-2 resource layout were requalified on local Windows:
+[184 passing tests, 2026-10-20](../validation/cleanup-windows-2026-10-20.md).
+This follow-up did not run WSL or replace historical platform evidence.

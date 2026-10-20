@@ -1,8 +1,10 @@
 # LibIdentifier contributor entry point
 
 Independent Python Android component identification; LIEF is the primary parser.
-Moraine consumes this package and must never be imported here. Current work is
-Stage 2; public production release follows measured Stage 3 acceptance.
+Consumers import this package; application-specific adapters stay outside this
+repository. Stage 2 foundations are complete. Prioritize Phase A preview package/
+profile distribution, then external integration; production accuracy qualification
+follows measured Stage 3 acceptance. Read `docs/development/release-readiness.md`.
 
 Read `docs/development/README.md`, `docs/development/roadmap.md`, then the relevant
 stage and technical page. `docs/integration.md` is the public contract authority;

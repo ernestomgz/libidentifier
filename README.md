@@ -4,10 +4,11 @@ Development status: pre-production prototype, not ready for production deploymen
 
 Development: [roadmap](docs/development/roadmap.md),
 [Stage 2 acceptance](docs/development/stages/stage-2.md),
+[initial release checklist](docs/development/release-readiness.md),
 [contributor entry point](AGENTS.md). Historical proposals are archived; the
 [integration guide](docs/integration.md) is the public contract authority.
 
-LibIdentifier is a small offline Python package and CLI for identifying known compiled Android and native components from locally built reference profiles. Stage 1 supports APK/ZIP, standalone DEX, standalone ELF, and directories containing those files.
+LibIdentifier is a small offline Python package and CLI for identifying known compiled Android and native components from local reference profiles. The current engine supports APK/ZIP, standalone DEX, standalone ELF, and directories containing those files.
 
 It uses LIEF for DEX and ELF parsing, SQLite for local reference profiles, and standard-library archive handling. Identification never calls the network or executes submitted binaries. Optional advisory assessment invokes a verified local OSV-Scanner in full offline mode. The CLI can download a missing Maven advisory database during setup; `--offline` prohibits that download.
 
@@ -66,7 +67,7 @@ summary = inspect(Path("app.apk"))
 export_cyclonedx(result, Path("components.cdx.json"))
 ```
 
-## What Stage 1 Identifies
+## Identification capabilities
 
 - DEX class-shape fingerprints using canonical `dex-shape-v2` (old profiles require an explicit rebuild).
 - Exact ELF identity using `elf-identity-v1`, primarily whole-file SHA-256.
@@ -82,7 +83,7 @@ Structural DEX matches normally identify the library family only. Exact versions
 - Optional Maven advisory assessment requires a trusted, compatible OSV-Scanner v2 executable and a provisioned local snapshot. GitHub and package-manager installations are supported; v2.6.0 and v2.7.0 are tested. It does not establish reachability or exploitability.
 - No JavaScript, Hermes, Dart AOT, Flutter package, or npm dependency identification.
 - DEX matching is conservative and shape-based; aggressive R8/ProGuard transformations may reduce confidence or prevent matches.
-- Stage 1 thresholds are configurable starting points, not calibrated accuracy claims.
+- Detection thresholds are configurable starting points, not calibrated accuracy claims.
 - JAR/AAR ingestion is a trusted profile-build operation and depends on user-supplied local D8.
 
 ## Test Fixtures

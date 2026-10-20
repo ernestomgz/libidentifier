@@ -1,30 +1,39 @@
+# Python bytecode, environments and build output.
 __pycache__/
 *.py[cod]
 *.egg-info/
+.venv/
+venv/
+.development-deps/
+build/
+dist/
+
+# Test and analysis caches.
 .pytest_cache/
 .pytest_tmp/
-tmp_run/
-*.sqlite-shm
-*.sqlite-wal
-dist/
-build/
-samples/
-test-results/d8-wrapper.cmd
-test-results/reference-artifacts/
-test-results/tmp/
-test-results/ci/
-.tools/
-
-# Local Python environments and tooling caches.
-.venv/
-.development-deps/
-venv/
 .mypy_cache/
 .ruff_cache/
 .coverage
 htmlcov/
+tmp_run/
 
-# Optional, downloaded OSV release assets (never vendor executables).
+# Generated validation output; only the directory guide is source.
+/test-results/*
+!/test-results/README.md
+
+# Local tools, sample inputs, references and advisory snapshots.
+.tools/
+.local/
+samples/
+advisory-db/
+reference-artifacts/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite-journal
+*.sqlite.manifest.json
+
+# Downloaded executables are never vendored.
 osv-scanner
 osv-scanner.exe
 osv-scanner_windows_*.exe
@@ -32,11 +41,6 @@ osv-scanner_linux_*
 osv-scanner_darwin_*
 osv-scanner_SHA256SUMS
 
-# Locally provisioned profiles/advisories and downloaded reference metadata.
-advisory-db/
-reference-artifacts/
-*.sqlite
-*.sqlite-journal
-*.sqlite.manifest.json
-test-results/*.pom
-
+# Local consumer-specific notes are never distributed.
+/moraine-integration.md
+/docs/integration-moraine.md

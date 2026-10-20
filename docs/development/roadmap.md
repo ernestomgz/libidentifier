@@ -1,6 +1,9 @@
 # Development roadmap
 
-Approved sequence: M0 → M1 → M2 → M3 → M4 → Moraine integration → Stage 3.
+Delivery sequence: completed M0 → M1 → M2 → M3 → M4 → Phase A initial
+distribution → Phase B consumer integration → Phase C / Stage 3 improvements.
+See [release readiness](release-readiness.md) for the authoritative Phase A checklist.
+Publish a small validated preview catalog first; expansion is not an integration blocker.
 Stage 2 establishes working external concepts; Stage 3 improves algorithms and
 coverage through those concepts. No identical-results guarantee is implied.
 

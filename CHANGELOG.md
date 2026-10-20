@@ -2,6 +2,13 @@
 
 ## Unreleased — Stage 2 foundations
 
+- Release-first roadmap: preview package and small schema-2 profile distribution
+  before catalog expansion and Stage 3 accuracy qualification.
+- Removed obsolete generated validation output and schema-1 sample databases;
+  retained selected dated evidence under `docs/development/validation/`.
+- Canonical DEX implementation now uses `fingerprint/dex_v2.py`; optional local
+  qualification resources use ignored `.local/` and `.tools/` directories.
+
 - Canonical DEX descriptors/interfaces and location-aware ownership uncertainty.
 - Additive evidence, analysis status, unattributed clusters and typed structural,
   ordinary invocation, published-dependency and component relationship models.

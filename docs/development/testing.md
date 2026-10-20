@@ -1,7 +1,7 @@
 # Testing and acceptance
 
 Use Python 3.11+ with `lief==0.17.1` and the dev dependencies. Run
-`python -m pytest -q` (optionally `--basetemp .pytest-tmp`). Test fixtures create
+`python -m pytest -q` (optionally `--basetemp .pytest_tmp/run`). Test fixtures create
 synthetic DEX/ELF and temporary databases. Never use production data as test output.
 Windows Store Python aliases may be unavailable in restricted environments; use
 a working explicit interpreter and an isolated dependency directory if needed.
@@ -12,8 +12,8 @@ release jobs must run them. JAR/AAR qualification needs local Java, D8/android.j
 these are build prerequisites, never scan prerequisites.
 
 For the optional six real-APK regressions, set `LIBIDENTIFIER_TEST_PROFILES` to a
-database rebuilt with this engine (default historical location:
-`test-results/samples/reference-profiles.sqlite`). A schema-1 local fixture is
+database rebuilt with this engine (local default:
+`.local/profiles/profiles.sqlite`). A schema-1 local fixture is
 incompatible and must not be relabeled. Set `LIBIDENTIFIER_REQUIRE_OSV=1` for
 qualification jobs so missing scanner integration cannot silently skip.
 
@@ -40,7 +40,12 @@ download/checksum errors before re-raising them. Qualification downloads use
 workflow-local publisher checksum pins; runtime scanner acceptance remains based
 on capabilities and any caller-supplied hash. When artifacts are missing, inspect
 the first failing step; the final upload warning is not the original failure.
-Historical reports under `test-results/` are evidence for their recorded checkout.
+Selected historical reports under `docs/development/validation/` are evidence
+for their recorded checkout. New generated reports go in ignored `test-results/`.
+Native scanner default: `.tools/osv-scanner_windows_amd64.exe`; the optional
+published Maven snapshot lives in `.local/advisory-db`. Keep reusable dependencies
+in `.development-deps/` or a working local venv. Create `.pytest_tmp` before using
+a nested basetemp. Do not check generated databases or machine-local notes into Git.
 The [Stage 2 checklist](stages/stage-2.md) owns acceptance status.
 
 Benchmark protocol: use reproducible apps with build-ground-truth coordinates,

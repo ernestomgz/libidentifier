@@ -17,7 +17,7 @@ from libidentifier.vulnerabilities import database, runner
 from conftest import make_dex, make_apk, lib_classes
 
 ROOT = Path(__file__).resolve().parents[1]
-EXE = Path(os.environ.get('LIBIDENTIFIER_TEST_OSV', ROOT / 'test-results/tmp/osv/osv-scanner_windows_amd64.exe'))
+EXE = Path(os.environ.get('LIBIDENTIFIER_TEST_OSV', ROOT / '.tools/osv-scanner_windows_amd64.exe'))
 
 
 @pytest.fixture(autouse=True)
@@ -266,7 +266,7 @@ def test_correlate_retains_partial_identification(versioned,qualified_options):
     assert VulnerabilityReport.from_dict(json.loads(report.to_json()))==report
 
 def test_published_maven_advisory_version_matching(qualified_options):
-    live=ROOT/'test-results/tmp/osv/live-db'
+    live=ROOT/'.local/advisory-db'
     if not (live/'CURRENT.json').is_file(): pytest.skip('explicitly provisioned published Maven snapshot required')
     options=replace(qualified_options,database=live)
     scanner=runner.verify_scanner(options)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from libidentifier.extractors.dex import parse_dex
 from libidentifier.extractors.elf import parse_elf
-from libidentifier.fingerprint.dex_v1 import digest_class
+from libidentifier.fingerprint.dex_v2 import digest_class
 
 from conftest import lib_classes, make_dex, make_minimal_elf
 

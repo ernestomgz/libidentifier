@@ -1,18 +1,25 @@
 # Development documentation
 
-Read [roadmap](roadmap.md), the relevant [stage](stages/stage-2.md), and
-[testing](testing.md). The public contract is [integration](../integration.md).
-Current internals belong in [architecture](../architecture.md),
-[fingerprints](../fingerprints.md), [formats](../formats.md), and
-[profile database](../profile-database.md). Scope limits belong in
-[limitations](../limitations.md). [Moraine notes](../integration-moraine.md)
-contain consumer mapping only.
+Start with the [roadmap](roadmap.md), [release readiness](release-readiness.md),
+[Stage 2 checklist](stages/stage-2.md) and [testing](testing.md).
+The [public integration contract](../integration.md) owns API/JSON behavior.
+Implementation authorities are [architecture](../architecture.md),
+[fingerprints](../fingerprints.md), [formats](../formats.md) and
+[profile database](../profile-database.md); [limitations](../limitations.md)
+defines scope.
 
-Stage pages own requirement/acceptance status; the roadmap owns sequence.
-Neither repeats the API specification. [Decisions](decisions/0001-stage-2.md)
-record consequential approved choices. The [original design](archive/technical-specification-v1.md)
-is preserved history and is not an implemented contract.
+Repository layout:
 
-Every task updates its technical documentation, stage status, relevant contract
-documentation and acceptance tests. Historical `test-results/` reports retain
-their dates; current validation must identify its actual environment and skips.
+- `src/libidentifier/`: independent runtime package and CLI.
+- `tests/`: synthetic fixtures and optional external-asset regressions.
+- `catalog/`: trusted reference coordinates and hashes (catalog format schema 1).
+- `benchmarks/`: benchmark driver and example corpus.
+- `docs/development/validation/`: selected dated Stage 2 evidence and current local validation.
+- `docs/development/archive/`: verbatim original proposal, retained as history.
+- `test-results/`: ignored generated output; no bundled reference databases.
+- `.local/`, `.tools/`, `.development-deps/`, `samples/`: ignored local resources.
+
+Stage pages own acceptance status; the roadmap owns sequence and release
+readiness owns the initial distribution checklist. [Decisions](decisions/0001-stage-2.md)
+record durable architectural choices. Historical reports identify their original
+paths and environments; they do not describe the current resource layout.

@@ -114,7 +114,7 @@ def test_duplicate_definitions_have_ambiguous_ownership(tmp_path, demo_db):
 
 def test_variants_release_identity_and_no_inflation(tmp_path):
     from collections import Counter
-    from libidentifier.fingerprint.dex_v1 import digest_class
+    from libidentifier.fingerprint.dex_v2 import digest_class
     dex=make_dex(lib_classes('lib/alpha')); ref=tmp_path/'ref.dex';ref.write_bytes(dex)
     db=tmp_path/'profiles.sqlite'; built=build_profile(ref,purl='pkg:maven/example/demo@1.0',database=db)
     before=identify(ref,profiles=db)

@@ -246,7 +246,7 @@ def test_real_apk_sca_regression(tmp_path, filename, names):
     root = Path(__file__).resolve().parents[1]
     apk = root / 'samples' / filename
     import os
-    db = Path(os.environ.get('LIBIDENTIFIER_TEST_PROFILES', root / 'test-results/samples/reference-profiles.sqlite'))
+    db = Path(os.environ.get('LIBIDENTIFIER_TEST_PROFILES', root / '.local/profiles/profiles.sqlite'))
     if not apk.is_file() or not db.is_file():
         pytest.skip('local sample and validation database required')
     result = identify(apk, profiles=db)

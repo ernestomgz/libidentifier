@@ -10,7 +10,7 @@ from collections import Counter, defaultdict
 from .config import IdentifyOptions
 from .extractors.dex import ClassFeature
 from .extractors.elf import ElfFeature
-from .fingerprint.dex_v1 import digest_class, is_trivial_shape
+from .fingerprint.dex_v2 import digest_class, is_trivial_shape
 from .models import CodeLocator, CodeOwnerHint, ComponentMatch
 from .profiles.store import dex_class_rows, release_rows
 from .purl import family_purl

@@ -22,7 +22,7 @@ The scan pipeline is:
    metadata, reporting capability status, evidence, uncertainty and limitations.
 10. Emit deterministic JSON; unknown-output caps apply after enrichment.
 
-The package has no Moraine dependency. Optional `scan()`/`correlate()` assessment
+The package has no dependency on any consuming application. Optional `scan()`/`correlate()` assessment
 uses a verified local OSV executable and advisory snapshot. Python scan APIs never
 download; the assessment CLI may provision a wholly absent database unless
 `--offline`. Existing databases require explicit update. Assessment itself always

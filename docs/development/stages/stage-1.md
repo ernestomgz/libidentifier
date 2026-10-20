@@ -6,6 +6,7 @@ matching, SQLite references, catalog fetch/rebuild, local D8 JAR/AAR conversion,
 version candidates, framework indicators, evidence/unknown inventories, API/CLI,
 JSON and conservative CycloneDX export. See technical pages for current details.
 
-Tests and dated `test-results/` reports cover synthetic and six real APK samples.
+Tests cover synthetic inputs and optional six real APK samples. Selected historical
+evidence is retained under `docs/development/validation/`.
 These demonstrate a foundation, not representative production precision/recall.
 Native parser memory/time isolation remains a host responsibility.
