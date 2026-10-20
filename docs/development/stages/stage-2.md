@@ -41,3 +41,9 @@ graph, runtime dispatch, data-flow or R8 generation is required in Stage 2.
 Repository cleanup and schema-2 resource layout were requalified on local Windows:
 [184 passing tests, 2026-10-20](../validation/cleanup-windows-2026-10-20.md).
 This follow-up did not run WSL or replace historical platform evidence.
+
+Phase A distribution implementation is locally qualified: public profile
+packaging/install/validation, portable manifests, package build and publishing
+workflow. [Phase A evidence](../validation/phase-a-windows-2026-10-20.md) records
+201 Windows tests and the final 17-case distribution follow-up. Manual publication
+and real hosted acquisition remain open in the [release checklist](../release-readiness.md).

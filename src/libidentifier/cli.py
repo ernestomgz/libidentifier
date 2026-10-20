@@ -21,6 +21,7 @@ from .table import write_table
 from .profiles.builder import build_profile, validate_database
 from .profiles.catalog import load_catalog
 from .profiles.fetcher import fetch_catalog, rebuild_database
+from .profiles.distribution import DEFAULT_ENGINE_REQUIREMENT, DEFAULT_PROFILE_MANIFEST, install_profiles, package_profiles
 from .sbom import export_cyclonedx
 from .version import __version__
 
@@ -73,6 +74,22 @@ def _cmd_profiles_build(args) -> int:
         reference_sha256=args.sha256,
     )
     sys.stdout.write(json.dumps(built.to_dict(), sort_keys=True, separators=(",", ":")) + "\n")
+    return 0
+
+
+def _cmd_profiles_package(args) -> int:
+    manifest = package_profiles(args.database, output_dir=args.output_dir,
+        snapshot_version=args.snapshot_version, source_revision=args.source_revision,
+        requires_engine=args.requires_engine)
+    sys.stdout.write(json.dumps(manifest, indent=2) + "\n")
+    return 0
+
+
+def _cmd_profiles_install(args) -> int:
+    manifest = install_profiles(args.manifest, database=args.database, offline=args.offline,
+        replace=args.replace, manifest_sha256=args.manifest_sha256,
+        timeout_seconds=args.timeout_seconds)
+    sys.stdout.write(json.dumps(manifest, indent=2) + "\n")
     return 0
 
 
@@ -205,6 +222,21 @@ def build_parser() -> argparse.ArgumentParser:
 
     profiles_p = sub.add_parser("profiles")
     profiles_sub = profiles_p.add_subparsers(dest="profiles_command", required=True)
+    package_p = profiles_sub.add_parser("package", help="prepare portable profile release assets")
+    package_p.add_argument("--database", required=True)
+    package_p.add_argument("--output-dir", required=True)
+    package_p.add_argument("--snapshot-version", required=True)
+    package_p.add_argument("--source-revision", required=True)
+    package_p.add_argument("--requires-engine", default=DEFAULT_ENGINE_REQUIREMENT)
+    package_p.set_defaults(func=_cmd_profiles_package)
+    install_p = profiles_sub.add_parser("install", help="explicitly install a local or HTTPS profile release")
+    install_p.add_argument("--manifest", default=DEFAULT_PROFILE_MANIFEST)
+    install_p.add_argument("--database", required=True)
+    install_p.add_argument("--offline", action="store_true")
+    install_p.add_argument("--replace", action="store_true")
+    install_p.add_argument("--manifest-sha256")
+    install_p.add_argument("--timeout-seconds", type=float, default=60)
+    install_p.set_defaults(func=_cmd_profiles_install)
     build_p = profiles_sub.add_parser("build")
     build_p.add_argument("path")
     build_p.add_argument("--purl", required=True)

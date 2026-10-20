@@ -1,7 +1,7 @@
 # Development documentation
 
 Start with the [roadmap](roadmap.md), [release readiness](release-readiness.md),
-[Stage 2 checklist](stages/stage-2.md) and [testing](testing.md).
+[Stage 2 checklist](stages/stage-2.md) and [testing](testing.md) and [release instructions](../releases.md).
 The [public integration contract](../integration.md) owns API/JSON behavior.
 Implementation authorities are [architecture](../architecture.md),
 [fingerprints](../fingerprints.md), [formats](../formats.md) and

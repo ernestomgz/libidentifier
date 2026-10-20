@@ -1,25 +1,42 @@
 [build-system]
-requires = ["setuptools>=69"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "libidentifier"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Offline identification of compiled Android and native libraries from local fingerprints"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "Apache-2.0"}
+license = "Apache-2.0"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
 authors = [{name = "LibIdentifier authors"}]
-dependencies = ["lief==0.17.1"]
+dependencies = ["lief==0.17.1", "packaging>=24"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Repository = "https://github.com/ernestomgz/libidentifier"
+Documentation = "https://github.com/ernestomgz/libidentifier/blob/main/docs/integration.md"
+Issues = "https://github.com/ernestomgz/libidentifier/issues"
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+release = ["build>=1.2", "twine>=6"]
 
 [project.scripts]
 libidentifier = "libidentifier.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.dynamic]
+version = {attr = "libidentifier.version.__version__"}
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

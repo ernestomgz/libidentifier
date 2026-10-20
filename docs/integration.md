@@ -528,3 +528,30 @@ The supported compatibility boundary is:
 Upgrade from a reviewed new checkout with `python -m pip install --upgrade .`, validate or rebuild a new database with that version, run representative integration scans, then deploy the package and compatible database together. Retain the previous pair for rollback. The catalog is updated only through reviewed, pinned entries followed by explicit fetch/rebuild. Stage 3 must preserve the scan API and schema semantics even if an old fingerprint database must be replaced.
 
 Automated tests protect public signatures, result fields, null versions, additive/legacy deserialization, incompatible schemas/databases, fatal and partial errors, deterministic serialization, and Python/JSON/table consistency. The original design's proposed thresholds and contamination-prone old DEX algorithm were superseded by actual class-definition filtering, evidence-backed descriptor matching and conservative version handling; consumers must not depend on those earlier internals.
+
+## Explicit reference distribution maintenance
+
+`install_profiles(manifest, *, database, offline=False, replace=False,
+manifest_sha256=None, timeout_seconds=60, max_download_bytes=536870912,
+max_database_bytes=2147483648)` imports a local manifest/assets or acquires them
+over HTTPS. Omitting `manifest` selects the initial pinned official preview URL.
+`offline=True` requires local input. `replace=True` is required for existing
+destinations. Size/compatibility/hash/integrity/inventory failures preserve the
+old installation. It returns the validated release manifest (schema 1).
+
+`package_profiles(database, *, output_dir, snapshot_version, source_revision,
+requires_engine=">=0.2.0rc1,<0.3.0")` prepares portable release assets in a new
+directory and returns that manifest; source databases are unchanged. Snapshot
+versions are independent of engine and internal database versions.
+
+These are explicit maintenance APIs. Analysis APIs remain download-free and
+never invoke profile installation. Consumers own their version pins, private
+paths, initialization, scanner provisioning and update schedule. See the
+[release guide](releases.md) for distribution format, limits, rollback and
+manual publishing instructions.
+
+`validate_profiles(database)` is download-free and returns status `valid`,
+internal schema/fingerprint versions, SHA-256/size, snapshot/database ID, inventory
+counts and reference provenance after schema, integrity and foreign-key checks.
+It raises `ProfileError` for invalid/incompatible data. Consumer health checks
+can use it without importing profile-store internals.

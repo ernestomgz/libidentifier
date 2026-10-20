@@ -8,8 +8,12 @@ from .models import ProfileBuildResult, ScanResult
 from .models import (Producer, AnalysisRun, EvidenceRecord, EntityRef, OwnershipAssertion,
                      Relationship, UnattributedCluster)
 from .version import __version__
+from .profiles.distribution import install_profiles, package_profiles, validate_profiles
 
 __all__ = [
+    "install_profiles",
+    "package_profiles",
+    "validate_profiles",
     "IdentifyOptions",
     "ProfileBuildResult",
     "ScanResult",

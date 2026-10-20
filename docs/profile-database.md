@@ -56,3 +56,13 @@ hash and output hash. Multidex D8 output is rejected explicitly instead of silen
 dropping secondary DEX files. R8 generation is Stage 3. Canonical reproducibility
 excludes local paths/timestamps; byte-identical SQLite distribution is not claimed.
 
+
+## Distribution
+
+`profiles package` creates a portable compressed snapshot, versioned distribution
+manifest and checksums from a validated schema-2 database. `profiles install`
+explicitly imports or downloads those assets with bounded size, compatibility,
+checksum, integrity and inventory checks before atomic installation. Existing
+files require explicit replacement. The source database is unchanged. See
+[release/install instructions](releases.md); the original catalog generation
+commands remain available and do not require a hosted release.

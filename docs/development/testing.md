@@ -63,3 +63,14 @@ five-minute timeout, wall-clock time and process peak RSS. Quality metrics requi
 `ground_truth_complete=true`; incomplete real-world samples are performance
 pilots, never precision/recall ground truth. Record build variants, input hashes,
 tool/database provenance and independent train/evaluation splits.
+
+Phase A distribution regressions are in `tests/test_profile_distribution.py`:
+portable nonmutating/repeatable packaging, local offline install, streamed HTTPS
+transport, manifest pins, incompatible/invalid manifests, resource limits, corrupt
+SQLite, explicit replacement and concurrent destination protection. HTTPS tests
+use controlled transport responses; they do not establish publication of real
+GitHub assets. Use `python -m build`, `python -m twine check --strict` and
+`python tools/check_distributions.py dist` before publishing. The release workflow
+also rebuilds the sdist, installs the wheel independently and requires a successful
+Tests workflow for the exact version-tag commit before PyPI publication. See
+[manual release steps](../releases.md).

@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased — Stage 2 foundations
+## 0.2.0rc1 — Stage 2 preview (publication pending)
+
+- Explicit profile packaging/acquisition APIs and CLI, portable release manifests,
+  hashes, engine compatibility, bounded downloads/decompression, SQLite integrity
+  checks and atomic install with explicit replacement. Analysis remains offline.
+- Single-source package version, PyPI metadata, wheel/sdist content checks,
+  Trusted Publishing workflow and maintainer publication instructions.
 
 - Release-first roadmap: preview package and small schema-2 profile distribution
   before catalog expansion and Stage 3 accuracy qualification.

@@ -20,6 +20,11 @@ selectively; see the [integration guide](docs/integration.md).
 
 ## Install
 
+Preview `0.2.0rc1` package and profile publication are being prepared. See
+[release/install instructions](docs/releases.md) for the current manual steps;
+PyPI and default profile-download commands require publication first.
+
+
 ```powershell
 python -m pip install -e .
 ```

@@ -8,12 +8,12 @@ improve later. This checklist does not claim publication has occurred.
 |---|---|---|
 | Stage 2 public models, detection and offline assessment | Implemented | Preserve APIs, JSON schema 1, CLI and native OSV regressions |
 | Advisory maintenance and CLI provisioning | Implemented | Missing-only provisioning; offline prohibits downloads; explicit refresh |
-| PyPI package release | Pending | Versioned wheel/sdist, installed-package smoke test, release provenance |
-| Official profile snapshot | Rebuilt locally; publication pending | Small schema-2 snapshot, integrity and engine validation, documented coverage |
-| Distribution manifest/checksums | Pending | Immutable snapshot ID, SHA-256, schema/engine compatibility, provenance and catalog coverage; no machine-specific paths |
-| Generic profile acquisition | Pending | Explicit download/import, bounded validated input, checksum/compatibility checks, atomic install and offline local input |
-| Standalone release instructions | Pending | Clean installation, profile acquisition, optional OSV setup, offline use and explicit updates |
-| Clean-install qualification | Pending | Use packaged artifacts and downloaded release assets on supported platforms; record skips and provenance |
+| PyPI package release | Code/workflow prepared; account setup and publication manual | Versioned wheel/sdist, installed-package smoke test, release provenance |
+| Official profile snapshot | Rebuilt; portable preview assets prepared; publication manual | Small schema-2 snapshot, integrity and engine validation, documented coverage |
+| Distribution manifest/checksums | Implemented | Immutable snapshot ID, SHA-256, schema/engine compatibility, provenance and catalog coverage; no machine-specific paths |
+| Generic profile acquisition | Implemented in public API and CLI | Explicit download/import, bounded validated input, checksum/compatibility checks, atomic install and offline local input |
+| Standalone release instructions | Implemented; see release guide | Clean installation, profile acquisition, optional OSV setup, offline use and explicit updates |
+| Clean-install qualification | Local Windows qualification passed; public/hosted checks pending | Use packaged artifacts and downloaded release assets on supported platforms; record skips and provenance |
 
 The retained ignored development snapshot is `.local/profiles/profiles.sqlite`:
 schema 2, fingerprint bundle `dex-shape-v2-canonical+elf-identity-v1`, six families,
@@ -30,3 +30,11 @@ not belong in this project's published source or documentation.
 
 Phase C expands the catalog, adds POM metadata and improves detection through
 [Stage 3](stages/stage-3.md), without redesigning the public concepts.
+
+Implementation and exact manual publication steps: [release guide](../releases.md).
+Publication and fresh acquisition from the real hosted assets cannot be claimed
+until the maintainer has created the accounts/releases and executed those steps.
+
+Local execution evidence: [Phase A Windows validation](validation/phase-a-windows-2026-10-20.md).
+The code is prepared; Phase A publication gates remain open until PyPI/GitHub
+releases and acquisition of those real public artifacts succeed.

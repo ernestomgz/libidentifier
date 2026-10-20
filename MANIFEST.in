@@ -1,0 +1,15 @@
+include LICENSE THIRD_PARTY_NOTICES.md CHANGELOG.md
+recursive-include docs *.md *.json
+recursive-exclude docs __pycache__ *integration-moraine* *moraine-integration*
+recursive-include catalog *.json
+recursive-include benchmarks *.py *.json
+recursive-include tests *.py *.json
+recursive-include tools *.py
+prune .local
+prune .tools
+prune .development-deps
+prune .release-venv
+prune samples
+prune test-results
+prune build
+exclude moraine-integration.md
