@@ -22,7 +22,9 @@ classifiers = [
 
 [project.urls]
 Repository = "https://github.com/ernestomgz/libidentifier"
-Documentation = "https://github.com/ernestomgz/libidentifier/blob/main/docs/integration.md"
+Documentation = "https://github.com/ernestomgz/libidentifier/blob/main/docs/quickstart.md"
+Installation = "https://github.com/ernestomgz/libidentifier/blob/main/docs/installation.md"
+"API reference" = "https://github.com/ernestomgz/libidentifier/blob/main/docs/integration.md"
 Issues = "https://github.com/ernestomgz/libidentifier/issues"
 
 [project.optional-dependencies]

@@ -1,24 +1,30 @@
 # Quick start
 
-## Install and run
+Install from either [PyPI or GitHub](installation.md), then follow this guide.
+Both routes provide the same commands. This page covers [your first scan](#run-your-first-scan),
+[first-time setup](#first-time-setup), [saving results](#table-json-and-scripts),
+[result meanings](#understand-the-results), [advanced commands](#existing-explicit-commands),
+[resource updates](#update-the-resources-you-actually-use) and [troubleshooting](#troubleshooting).
 
-After the preview package and official profiles have been published:
+## Run your first scan
+
+In the environment where you installed LibIdentifier:
 
 ```powershell
-python -m pip install "libidentifier==0.2.0rc1"
-libidentifier scan app.apk --vulnerabilities
+libidentifier scan "app.apk" --vulns
 ```
 
-`--vulns` is an equivalent shorter option. Omit it for library identification only:
+Replace `app.apk` with your actual APK path. Quote paths containing spaces.
+`--vulnerabilities` is the equivalent long spelling. For library identification
+without advisory assessment:
 
 ```powershell
-libidentifier scan app.apk
+libidentifier scan "app.apk"
 ```
 
-Before publication, clone the reviewed repository and run
-`python -m pip install -e ".[dev]"` instead. Release status and maintainer steps
-are in [releases](releases.md). The initial six-family/eight-release catalog is
-small; it is not a complete inventory of every possible embedded dependency.
+The initial six-family/eight-release catalog is deliberately limited. Until the
+official profile assets are published, both PyPI/source installations need a
+compatible local database for library identification; see [verification without profiles](installation.md#verify-without-profiles).
 
 ## First-time setup
 
@@ -40,7 +46,9 @@ Installed resources will be reused for future scans.
 Download and set up these resources? [y/N]:
 ```
 
-Answer `y` to authorize setup. Identification without `--vulns` needs only profiles.
+Answer `y` to authorize setup. First setup needs Internet access and can take
+longer than later scans because the scanner and advisory archive are downloaded.
+Identification without `--vulns` needs only profiles.
 The scanner is checksum-verified before execution, checked for the required offline
 interface and installed at its pinned version. The selected advisory snapshot is
 validated. Actual identification and vulnerability assessment then run locally.
@@ -87,6 +95,24 @@ stops with an actionable error. If optional vulnerability setup is declined or
 fails, identification is retained and the advisory result is explicitly blocked;
 that is not a finding of zero vulnerabilities. See [exit codes](integration.md).
 
+## Understand the results
+
+| What you see | Meaning |
+|---|---|
+| Library identity with confidence/score | Evidence supports a library family; the score is not a calibrated probability. |
+| `Unknown [reference candidates]` | The installed version is unknown. Listed references are possibilities, not proven installed versions. |
+| Framework presence | Static evidence of a framework, not a complete inventory of its application logic/dependencies. |
+| `CONFIRMED` advisory/version match | The identified version matches advisory conditions; application reachability/exploitability is still unproven. |
+| `POTENTIAL` | Package-level advisory information with insufficient installed-version evidence to confirm applicability. |
+| `NOT ASSESSED` or blocked status | Assessment could not establish a result. An empty findings list does not mean no vulnerabilities. |
+| No matched libraries | No supported match within this catalog/coverage; it does not establish that the app contains no libraries. |
+
+`scan` JSON contains `identification` and `vulnerabilities` sections, even when
+advisory scanning was not requested. `identify` returns the identification result
+itself. Scripts should read status, errors and coverage as well as findings; exit
+codes express operational success, not whether an application is safe. The
+[public API/JSON contract](integration.md) defines the complete models.
+
 ## Existing explicit commands
 
 Explicit profile paths or `LIBIDENTIFIER_PROFILES` retain the existing JSON
@@ -105,38 +131,92 @@ a scanner. `identify` and `inspect` retain their defaults. Python analysis APIs
 always require their configured inputs and never download or prompt. See the
 [public contract](integration.md).
 
-## Explicit maintenance and updates
+## Update the resources you actually use
 
-Profiles and advisory data are independent. Install a new trusted compatible
-profile release explicitly, keeping the old engine/database pair for rollback:
+Package updates, profiles, the scanner and advisory data are independent.
+[Updating the installed package](installation.md#use-it-again-update-or-uninstall)
+does not refresh cached data. Nothing is silently upgraded during a scan.
 
-```powershell
-libidentifier profiles install --manifest ./download/profiles-manifest.json --database ./profiles.sqlite --offline --replace
-libidentifier profiles validate ./profiles.sqlite
-```
+The following examples select the managed root, including `LIBIDENTIFIER_HOME`
+when set. If you scan with explicit `--profiles` or `--osv-db`, maintain **those
+exact paths** instead. Updating a different `./advisory-db` will not repair the
+database used by your scan.
 
-For the managed database, substitute the actual managed `profiles/profiles.sqlite`
-path above. The default official manifest is pinned; new catalogs are not
-silently discovered or refreshed. See [release assets](releases.md).
-
-Refresh or repair advisory data explicitly using its actual managed/overridden path:
+### Windows PowerShell
 
 ```powershell
-libidentifier vulnerabilities update --database ./advisory-db --ecosystem Maven
-libidentifier vulnerabilities validate --database ./advisory-db
+$resourceRoot = if ($env:LIBIDENTIFIER_HOME) { $env:LIBIDENTIFIER_HOME } else { Join-Path $env:LOCALAPPDATA 'LibIdentifier' }
+libidentifier vulnerabilities update --database "$resourceRoot/advisory-db" --ecosystem Maven
+libidentifier vulnerabilities validate --database "$resourceRoot/advisory-db"
 ```
 
-These example relative paths are explicit destinations, not automatic managed-path
-aliases. An incomplete directory left by a failed advisory download also requires
-explicit `update`; it is not automatically overwritten on the next scan.
-For an air-gapped host, use `vulnerabilities provision --database ./advisory-db
---archive Maven-all.zip --fetched-at <actual-retrieval-ISO-timestamp>`.
+### Linux shell
 
-A managed scanner is not upgraded automatically. Its version/URLs/hashes are
-published in `cli_resources.py`; a new qualified pin arrives with a package
-release. Investigate checksum failures rather than executing the rejected file;
-select a reviewed explicit scanner or remove the invalid managed file and rerun
-setup. No APK or inventory is sent during provisioning or assessment.
+```sh
+resource_root="${LIBIDENTIFIER_HOME:-${XDG_CACHE_HOME:-$HOME/.cache}/libidentifier}"
+libidentifier vulnerabilities update --database "$resource_root/advisory-db" --ecosystem Maven
+libidentifier vulnerabilities validate --database "$resource_root/advisory-db"
+```
+
+To install newer profiles, obtain a trusted compatible release and keep the old
+engine/database pair for rollback. With `resourceRoot`/`resource_root` from above,
+use the appropriate command after placing its assets in `download/`:
+
+```powershell
+libidentifier profiles install --manifest ./download/profiles-manifest.json --database "$resourceRoot/profiles/profiles.sqlite" --offline --replace
+```
+
+```sh
+libidentifier profiles install --manifest ./download/profiles-manifest.json --database "$resource_root/profiles/profiles.sqlite" --offline --replace
+```
+
+Existing files require `--replace`. Stop other readers before replacing a database.
+The default official manifest is pinned; new catalogs are not silently discovered.
+See [release assets](releases.md) for compatibility, checksums and acquisition.
+
+An incomplete directory left by a failed advisory download requires explicit
+`vulnerabilities update` too. For an air-gapped host, copy a trusted Maven archive
+and run `vulnerabilities provision --database <actual-database-path> --archive
+Maven-all.zip --fetched-at <actual-retrieval-ISO-timestamp>` with your real values.
+
+Managed scanner version/URLs/hashes are in `cli_resources.py`; new qualified pins
+arrive with package releases. Existing scanner files are never silently replaced.
+No APK or inventory is sent during provisioning or assessment.
+
+## Troubleshooting
+
+| Problem | Next step |
+|---|---|
+| Command not found, activation blocked, or pip installation fails | Follow [installation troubleshooting](installation.md#installation-problems) using the same Python environment. |
+| Profile download returns 404 | Confirm the official profile release is published. Cloning source does not include it. Use `inspect` or a compatible explicit local database meanwhile. |
+| `--offline` cannot find resources | Prepare them first with consent, or transfer trusted offline assets; `--yes` cannot override offline mode. |
+| A script refuses first-time setup | Supply `--yes` to authorize downloads, or preinstall resources and use `--offline`. It will not read piped input as consent. |
+| Advisory database is missing, corrupt, incomplete or stale | Run explicit `vulnerabilities update` against the actual managed/overridden path above, then retry. Identification is preserved if advisory setup fails. |
+| Scanner checksum fails | Do not run the rejected file. Verify its provenance; select a reviewed explicit scanner, or investigate/remove the invalid managed file and repeat setup. Existing files are not automatically repaired. |
+| A version is unknown or there are no library matches | Check catalog coverage and evidence. Do not treat reference candidates as installed versions or an empty result as proof of safety. |
+
+## Use the Python API
+
+Install from either route above. Provision a chosen local profile path once,
+if it does not already exist (requires the published official release):
+
+```powershell
+libidentifier profiles install --database profiles.sqlite
+```
+
+Then use that path explicitly from Python:
+
+```python
+from pathlib import Path
+from libidentifier import identify
+
+result = identify(Path("app.apk"), profiles=Path("profiles.sqlite"))
+result.write_json(Path("libraries.json"))
+```
+
+Provisioning is separate from analysis. Reuse the existing file on later calls;
+analysis never downloads or prompts. For vulnerability options, error handling,
+large results and JSON models, use the [public API guide](integration.md).
 
 ## Advanced reference generation and results
 
@@ -152,3 +232,15 @@ and typed relationships. All parsed unmatched definitions are returned by defaul
 Tables summarize identity/version confidence and distinguish confirmed version
 matches, potential package advisories and unassessed components. Static references
 do not prove runtime execution, reachability or exploitability.
+
+For a trusted standalone DEX reference whose coordinates/version you know, a
+minimal custom-profile workflow is:
+
+```powershell
+libidentifier profiles build ./trusted/library.dex --purl pkg:maven/example/library@1.0.0 --database custom.sqlite
+libidentifier scan "app.apk" --profiles custom.sqlite --format table
+```
+
+The version labels the reference, not a guaranteed installed version in the APK.
+JAR/AAR generation requires a local D8 toolchain; it is not required to use the
+official profiles.

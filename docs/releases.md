@@ -1,4 +1,4 @@
-# Preview releases and installation
+# Maintainer release guide
 
 LibIdentifier is independent of its consumers. The engine is a Python package;
 reference profiles are separately versioned GitHub release assets. OSV-Scanner
@@ -6,22 +6,10 @@ and the Maven advisory snapshot are optional separately provisioned resources.
 Package installation does not download them. The initial package is `0.2.0rc1`;
 the initial small profile snapshot is `2026.10.20-preview.1`.
 
-## User installation after publication
+For user setup, start with [installation from PyPI or GitHub](installation.md)
+and [usage](quickstart.md). This page owns the publishing and release-asset process.
 
-These commands require the maintainer to publish the releases first. Until then,
-install the locally built wheel or the reviewed source checkout instead of PyPI.
-
-```powershell
-python -m pip install "libidentifier==0.2.0rc1"
-libidentifier scan app.apk --vulns
-# Or identify libraries only:
-libidentifier scan app.apk
-```
-
-On first use, the managed CLI asks before downloading missing resources. The
-compact table is the default. See [quick start](quickstart.md) for consent,
-`--yes`, `--offline`, JSON output, resource paths and explicit legacy commands.
-Python analysis APIs remain unchanged.
+## Profile release compatibility and offline acquisition
 
 `profiles install` defaults to the immutable initial official snapshot URL,
 not GitHub's mixed package/profile `latest` release. Supply `--manifest` to pin a
@@ -216,3 +204,10 @@ and verify publisher checksums before changing these values. Add architectures
 only when their native qualification is available. The Tests workflow consumes
 the same catalog. Automatic setup never queries a latest-release endpoint.
 Explicit native scanner overrides retain the general compatibility policy.
+
+After both releases are live, update the dated availability note in
+[installation](installation.md#before-you-start) and the [release checklist](development/release-readiness.md)
+using actual successful public-install evidence. Keep README availability wording
+conditional so published PyPI metadata does not permanently claim an unpublished
+status. User installation/usage belongs in those guides; this page owns maintainer
+publication steps.

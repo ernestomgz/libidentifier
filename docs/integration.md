@@ -1,5 +1,9 @@
 # Public integration guide
 
+For package installation and your first CLI scan, start with
+[installation](installation.md) and [usage](quickstart.md). This page is the
+authoritative reference for Python integrations and JSON consumers.
+
 LibIdentifier is an independent, offline Python package for identifying known third-party libraries in APK, DEX and ELF inputs. Library matches use a local SQLite reference database. Framework detection is a separate static presence assessment and does not need that database. Optional offline advisory assessment correlates reliable package identities using a trusted local, compatible OSV-Scanner executable and a separately provisioned local database. Identification and advisory matches do not establish reachability or exploitability.
 
 This document defines the public scan integration contract. Stage 3 may replace fingerprints, matchers and databases while preserving this contract. The technical specification describes the original design; verified current code and this guide take precedence over its illustrative examples and proposed thresholds.

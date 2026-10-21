@@ -52,3 +52,9 @@ Managed CLI first-use setup and clearer user documentation are qualified locally
 [216 Windows tests, 2026-10-21](../validation/managed-cli-windows-2026-10-21.md).
 Explicit CLI defaults and analysis APIs remain compatible. Hosted results for
 the follow-up commit are separate from this local evidence.
+
+The user-documentation audit adds complete PyPI/GitHub installation routes,
+activation-free Windows usage and exact managed update paths. Normal Windows
+source installation plus profile-free inspection passed; see the follow-up in
+[local evidence](../validation/managed-cli-windows-2026-10-21.md). No analysis API
+or runtime behavior changed in that documentation follow-up.

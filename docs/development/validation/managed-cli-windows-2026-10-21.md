@@ -59,3 +59,24 @@ is separate evidence; do not infer its completion from this local run.
 
 JUnit, installed CLI transcript/JSON and final artifact hashes are retained in
 ignored `test-results/`; publication artifacts are in ignored `dist/`.
+
+## Installation/usage documentation follow-up
+
+Documentation and project URL metadata only; runtime behavior is unchanged. A
+fresh private Windows Python 3.12 environment ran normal `python -m pip install .`
+with declared dependency/build-tool installation, then the installed executable
+reported `libidentifier 0.2.0rc1` and successfully inspected the existing OVAA
+APK without profiles. Log/transcript: ignored `test-results/docs-source-install.log`
+and `test-results/docs-source-inspect.txt`. No WSL run or additional full regression
+sweep was needed for these documentation changes.
+
+Current Markdown file/anchor links, README repository links intended for PyPI,
+control characters and 34 documented CLI command lines were checked against the
+actual parser. User setup now has complete Windows/Linux PyPI/source routes, a
+Windows activation-free alternative, result meanings, Python API entry points,
+managed-path updates and symptom-based troubleshooting. Public PyPI version and
+official profile endpoints both returned HTTP 404 during the availability check
+on 2026-10-21; live public installation remains a manual publication gate.
+
+The documentation/package-URL update also passed a fresh wheel/sdist build,
+strict twine metadata/rendering checks and distribution-content validation.

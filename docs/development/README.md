@@ -1,7 +1,10 @@
 # Development documentation
 
+For end-user setup, start with [installation](../installation.md) and
+[usage](../quickstart.md). This directory owns contributor/release internals.
+
 Start with the [roadmap](roadmap.md), [release readiness](release-readiness.md),
-[Stage 2 checklist](stages/stage-2.md) and [testing](testing.md) and [release instructions](../releases.md).
+[Stage 2 checklist](stages/stage-2.md), [testing](testing.md) and [release instructions](../releases.md).
 The [public integration contract](../integration.md) owns API/JSON behavior.
 Implementation authorities are [architecture](../architecture.md),
 [fingerprints](../fingerprints.md), [formats](../formats.md) and

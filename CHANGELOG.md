@@ -2,6 +2,10 @@
 
 ## 0.2.0rc1 — Stage 2 preview (publication pending)
 
+- Complete PyPI/GitHub source installation routes, Windows activation-free
+  commands, result interpretation, managed-path updates and user troubleshooting.
+  README/PyPI links lead to installation/usage before the advanced API reference.
+
 - Managed `scan app.apk` first-run setup with one consent prompt, `--yes`, strict
   `--offline`, project-pinned scanner downloads and persistent per-user resources.
 - `--vulns` alias, table default for managed scans, preserved explicit-profile
