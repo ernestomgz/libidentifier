@@ -36,15 +36,13 @@ jobs:
         shell: python
         run: |
           import hashlib, json, os, pathlib, shutil, urllib.request
-          # Qualification download pins, separate from runtime scanner compatibility.
-          assets = {
-              'nt': ('osv-scanner_windows_amd64.exe', '9964ed64ec9a387391eb4cc006ad5c531154821aef29b793e02c448de4686438'),
-              'posix': ('osv-scanner_linux_amd64', '160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b'),
-          }
-          asset, expected = assets[os.name]
+          import platform
+          from libidentifier.cli_resources import supported_scanner
+          release = supported_scanner(platform.system(), platform.machine())
+          asset, expected = release.filename, release.sha256
           target = pathlib.Path(os.environ['LIBIDENTIFIER_TEST_OSV'])
           target.parent.mkdir(parents=True, exist_ok=True)
-          url = 'https://github.com/google/osv-scanner/releases/download/v2.7.0/' + asset
+          url = release.url
           record = {'url': url, 'expected_sha256': expected, 'status': 'downloading'}
           try:
               with urllib.request.urlopen(url, timeout=60) as source, target.open('wb') as output:

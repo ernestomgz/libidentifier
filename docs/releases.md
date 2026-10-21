@@ -13,10 +13,15 @@ install the locally built wheel or the reviewed source checkout instead of PyPI.
 
 ```powershell
 python -m pip install "libidentifier==0.2.0rc1"
-libidentifier profiles install --database profiles.sqlite
-libidentifier profiles validate profiles.sqlite
-libidentifier identify app.apk --profiles profiles.sqlite --format table
+libidentifier scan app.apk --vulns
+# Or identify libraries only:
+libidentifier scan app.apk
 ```
+
+On first use, the managed CLI asks before downloading missing resources. The
+compact table is the default. See [quick start](quickstart.md) for consent,
+`--yes`, `--offline`, JSON output, resource paths and explicit legacy commands.
+Python analysis APIs remain unchanged.
 
 `profiles install` defaults to the immutable initial official snapshot URL,
 not GitHub's mixed package/profile `latest` release. Supply `--manifest` to pin a
@@ -71,10 +76,11 @@ results. `identify`, `inspect`, `scan` and
 `correlate` never invoke it. Public analysis JSON remains schema 1; the profile
 database is schema 2; release/catalog manifest schemas are separate.
 
-## Optional OSV setup
+## Explicit OSV setup (advanced)
 
-Install a supported native scanner through its official distribution channel,
-then run:
+Managed scans handle missing optional resources after consent. For an explicit
+legacy/API installation, install a compatible native scanner through its
+official distribution channel, then run:
 
 ```powershell
 libidentifier vulnerabilities update --database advisory-db --ecosystem Maven
@@ -86,6 +92,16 @@ the assessment CLI may prepare a wholly missing advisory database. Existing data
 requires explicit update. Actual assessment is always offline; see the
 [public contract](integration.md). Consumer applications own scanner installation
 and resource provisioning during their initialization, never during analysis.
+
+## Phase A completion order
+
+1. Push the committed changes and wait for the Tests matrix to pass.
+2. Publish the three profile assets under the exact profile tag described below,
+   before publishing the package, so first-run setup has a working download URL.
+3. Configure the PyPI publisher and GitHub environment.
+4. Publish the matching version tag release to run the package workflow.
+5. In a fresh environment, install from PyPI and run `scan app.apk --vulns`;
+   accept setup, then repeat with `--offline` to confirm resource reuse.
 
 ## Maintainer: prepare the Python release
 
@@ -191,3 +207,12 @@ snapshot immutable. Use a new identifier for updated data.
 
 After publication, release maintainers own data updates; each consuming
 application owns when it upgrades its pinned engine/profile pair.
+
+## Maintaining managed scanner pins
+
+`src/libidentifier/cli_resources.py` owns the project-supported version, platform
+filenames, official publisher URLs and SHA-256 values. Qualify a proposed build
+and verify publisher checksums before changing these values. Add architectures
+only when their native qualification is available. The Tests workflow consumes
+the same catalog. Automatic setup never queries a latest-release endpoint.
+Explicit native scanner overrides retain the general compatibility policy.

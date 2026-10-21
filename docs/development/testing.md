@@ -74,3 +74,12 @@ GitHub assets. Use `python -m build`, `python -m twine check --strict` and
 also rebuilds the sdist, installs the wheel independently and requires a successful
 Tests workflow for the exact version-tag commit before PyPI publication. See
 [manual release steps](../releases.md).
+
+Managed first-run regressions live in `tests/test_cli_setup.py`: one consent
+prompt, noninteractive refusal, `--yes`, strict `--offline`, cached resource reuse,
+JSON/table/file defaults, legacy/environment overrides, failed/corrupt resources,
+checksum-before-execution, explicit platform pins, API nonprovisioning and real
+native scanner installation/assessment using controlled download responses.
+`cli_resources.py` owns the same scanner pins used by the Tests workflow. Native
+tests require the qualified binary; response stubs do not claim the still-pending
+public profile URL is available.

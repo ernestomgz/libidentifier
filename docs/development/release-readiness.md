@@ -12,6 +12,7 @@ improve later. This checklist does not claim publication has occurred.
 | Official profile snapshot | Rebuilt; portable preview assets prepared; publication manual | Small schema-2 snapshot, integrity and engine validation, documented coverage |
 | Distribution manifest/checksums | Implemented | Immutable snapshot ID, SHA-256, schema/engine compatibility, provenance and catalog coverage; no machine-specific paths |
 | Generic profile acquisition | Implemented in public API and CLI | Explicit download/import, bounded validated input, checksum/compatibility checks, atomic install and offline local input |
+| Managed first-run CLI setup | Implemented; local Windows qualification passed | Consent/yes/offline, pinned scanner, persistent profiles/advisories, table defaults and legacy/API compatibility |
 | Standalone release instructions | Implemented; see release guide | Clean installation, profile acquisition, optional OSV setup, offline use and explicit updates |
 | Clean-install qualification | Local Windows qualification passed; public/hosted checks pending | Use packaged artifacts and downloaded release assets on supported platforms; record skips and provenance |
 
@@ -38,3 +39,7 @@ until the maintainer has created the accounts/releases and executed those steps.
 Local execution evidence: [Phase A Windows validation](validation/phase-a-windows-2026-10-20.md).
 The code is prepared; Phase A publication gates remain open until PyPI/GitHub
 releases and acquisition of those real public artifacts succeed.
+
+Managed CLI follow-up: [216 Windows tests and installed-wheel checks](validation/managed-cli-windows-2026-10-21.md).
+First-run setup requires the official profile asset URL to be published before
+the package is offered to new users.

@@ -47,3 +47,8 @@ packaging/install/validation, portable manifests, package build and publishing
 workflow. [Phase A evidence](../validation/phase-a-windows-2026-10-20.md) records
 201 Windows tests and the final 17-case distribution follow-up. Manual publication
 and real hosted acquisition remain open in the [release checklist](../release-readiness.md).
+
+Managed CLI first-use setup and clearer user documentation are qualified locally:
+[216 Windows tests, 2026-10-21](../validation/managed-cli-windows-2026-10-21.md).
+Explicit CLI defaults and analysis APIs remain compatible. Hosted results for
+the follow-up commit are separate from this local evidence.

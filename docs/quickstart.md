@@ -1,195 +1,154 @@
-# Quick Start
+# Quick start
 
-LibIdentifier identifies compiled Android/Java and native components from a local signature database. APK identification is offline; reference downloads only happen when you explicitly run profile maintenance commands.
+## Install and run
 
-Upgrading from the original prototype requires an explicit
-[schema-2 profile rebuild](profile-database.md); keep the old engine/database pair
-for rollback. Existing Python calls and compact table layout remain supported.
-JSON now includes evidence, clusters and typed relationships; see the authoritative
-[integration guide](integration.md#stage-2-evidence-clusters-and-relationships).
-For reduced enrichment cost, `inspect`, `identify` and `scan` accept
-`--no-calls`, `--no-relationships` and `--no-grouping`.
-
-## Clone and Install
-
-Windows PowerShell:
+After the preview package and official profiles have been published:
 
 ```powershell
-git clone <repo-url> libidentifier
-cd libidentifier
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e .[dev]
+python -m pip install "libidentifier==0.2.0rc1"
+libidentifier scan app.apk --vulnerabilities
 ```
 
-Linux shell:
-
-```sh
-git clone <repo-url> libidentifier
-cd libidentifier
-python3 -m venv .venv
-. .venv/bin/activate
-python -m pip install -e '.[dev]'
-```
-
-If your Windows `python.exe` launches the Microsoft Store instead of Python, install Python from python.org or use the `py` launcher.
-
-## Build a Signature Database
-
-The repository includes a small curated catalog at `catalog/references.json`. It is intentionally small and aimed at validation, not broad package coverage.
-
-Fetch the referenced artifacts into a local cache:
+`--vulns` is an equivalent shorter option. Omit it for library identification only:
 
 ```powershell
-libidentifier profiles fetch --catalog catalog\references.json --cache reference-artifacts
+libidentifier scan app.apk
 ```
 
-```sh
-libidentifier profiles fetch --catalog catalog/references.json --cache reference-artifacts
+Before publication, clone the reviewed repository and run
+`python -m pip install -e ".[dev]"` instead. Release status and maintainer steps
+are in [releases](releases.md). The initial six-family/eight-release catalog is
+small; it is not a complete inventory of every possible embedded dependency.
+
+## First-time setup
+
+With no `--profiles` and no `LIBIDENTIFIER_PROFILES` environment variable, `scan`
+selects managed resources. It lists only missing resources, displays their
+location and asks once:
+
+```text
+First-time setup
+
+The following resources are missing:
+  - Library profiles: official preview snapshot
+  - OSV-Scanner: project-supported executable (2.7.0)
+  - Maven vulnerability database: current snapshot
+
+Your APK will stay on this computer.
+Installed resources will be reused for future scans.
+
+Download and set up these resources? [y/N]:
 ```
 
-Rebuild the SQLite profile database:
+Answer `y` to authorize setup. Identification without `--vulns` needs only profiles.
+The scanner is checksum-verified before execution, checked for the required offline
+interface and installed at its pinned version. The selected advisory snapshot is
+validated. Actual identification and vulnerability assessment then run locally.
+
+Default managed layout:
+
+```text
+Windows: %LOCALAPPDATA%/LibIdentifier/
+Linux:   ${XDG_CACHE_HOME:-~/.cache}/libidentifier/
+  profiles/profiles.sqlite
+  tools/osv-scanner/2.7.0/<platform-specific-executable>
+  advisory-db/
+```
+
+Set `LIBIDENTIFIER_HOME` to choose another root. Explicit `--osv-scanner` and
+`--osv-db` override their paths. The latter's destination is also displayed when
+outside the managed root. Automatic scanner downloads support qualified
+Windows/Linux x64 builds only; unsupported systems preserve identification and
+report advisory assessment unavailable. Explicit compatible native Windows/Linux
+scanner overrides retain the existing behavior.
+
+Installed resources are reused. Existing stale/corrupt resources are never
+silently replaced. A discovered scanner is reused automatically only if its bytes
+match the project pin; explicit scanner overrides use compatibility checking and
+an optional caller-provided hash.
+
+## Table, JSON and scripts
+
+Managed scans default to the compact table. Setup/progress/warnings go to stderr,
+so JSON remains machine-readable:
 
 ```powershell
-libidentifier profiles rebuild --catalog catalog\references.json --cache reference-artifacts --database profiles.sqlite --d8 C:\Android\Sdk\build-tools\36.1.0\d8.bat --android-jar C:\Android\Sdk\platforms\android-35\android.jar
+libidentifier scan app.apk --vulns --format json
+libidentifier scan app.apk --vulns --output results.json
+libidentifier scan app.apk --format table --output results.txt
+libidentifier scan app.apk --vulns --yes --output results.json
+libidentifier scan app.apk --vulns --offline
 ```
 
-```sh
-libidentifier profiles rebuild --catalog catalog/references.json --cache reference-artifacts --database profiles.sqlite --d8 "$ANDROID_HOME/build-tools/36.1.0/d8" --android-jar "$ANDROID_HOME/platforms/android-35/android.jar"
-```
+`--yes` authorizes missing-resource setup without prompting. Without it,
+noninteractive execution never waits for input. `--offline` prohibits all setup
+downloads, even with `--yes`. If required profiles are unavailable, the command
+stops with an actionable error. If optional vulnerability setup is declined or
+fails, identification is retained and the advisory result is explicitly blocked;
+that is not a finding of zero vulnerabilities. See [exit codes](integration.md).
 
-DEX and ELF references do not need D8. JAR and AAR references do. Rebuilding works offline when all artifacts are already cached:
+## Existing explicit commands
 
-```sh
-libidentifier profiles rebuild --catalog catalog/references.json --cache reference-artifacts --database profiles.sqlite --d8 "$ANDROID_HOME/build-tools/36.1.0/d8" --android-jar "$ANDROID_HOME/platforms/android-35/android.jar" --offline
-```
-
-Validate the database:
-
-```sh
-libidentifier profiles validate profiles.sqlite
-```
-
-## Identify an APK
-
-Table output:
-
-```sh
-libidentifier identify samples/ovaa-1.0.0-app-debug.apk --profiles profiles.sqlite --format table
-```
-
-JSON output:
-
-```sh
-libidentifier identify samples/ovaa-1.0.0-app-debug.apk --profiles profiles.sqlite --format json --output libraries.json
-```
-
-You can also set a default profile database:
-
-```sh
-export LIBIDENTIFIER_PROFILES="$PWD/profiles.sqlite"
-libidentifier identify samples/ovaa-1.0.0-app-debug.apk --format table
-```
-
-Windows PowerShell:
+Explicit profile paths or `LIBIDENTIFIER_PROFILES` retain the existing JSON
+default. They do not enter the new managed setup path:
 
 ```powershell
-$env:LIBIDENTIFIER_PROFILES = "$PWD\profiles.sqlite"
-libidentifier identify samples\ovaa-1.0.0-app-debug.apk --format table
+libidentifier identify app.apk --profiles profiles.sqlite --format table
+libidentifier scan app.apk --profiles profiles.sqlite --format json --output results.json
+libidentifier scan app.apk --profiles profiles.sqlite --vulns --osv-scanner /path/to/osv-scanner --osv-db advisory-db --offline
+libidentifier inspect app.apk --output inventory.json
 ```
 
-LibIdentifier never downloads references during `identify`.
+Legacy advisory discovery remains PATH/working-directory based. Its CLI can
+provision a wholly absent advisory database unless `--offline`; it does not install
+a scanner. `identify` and `inspect` retain their defaults. Python analysis APIs
+always require their configured inputs and never download or prompt. See the
+[public contract](integration.md).
 
-## Inspect Without Matching
+## Explicit maintenance and updates
 
-Use `inspect` to parse an input and report coverage, unknown classes and parser errors without a profile database:
+Profiles and advisory data are independent. Install a new trusted compatible
+profile release explicitly, keeping the old engine/database pair for rollback:
 
-```sh
-libidentifier inspect samples/ovaa-1.0.0-app-debug.apk --format json --output inspect.json
+```powershell
+libidentifier profiles install --manifest ./download/profiles-manifest.json --database ./profiles.sqlite --offline --replace
+libidentifier profiles validate ./profiles.sqlite
 ```
 
-Both `inspect` and `identify` report framework presence separately from profile-backed libraries. Hints preserve evidence locations and confidence; Flutter, React Native, Compose, Cordova, Unity and Xamarin / .NET MAUI detection does not infer framework versions or analyze unsupported application payloads. Table output includes a concise framework section.
+For the managed database, substitute the actual managed `profiles/profiles.sqlite`
+path above. The default official manifest is pinned; new catalogs are not
+silently discovered or refreshed. See [release assets](releases.md).
 
-See [the public integration guide](integration.md) for complete API examples, result fields, failure handling and the compatibility policy Stage 3 must preserve.
+Refresh or repair advisory data explicitly using its actual managed/overridden path:
 
-## Python API
-
-```python
-from pathlib import Path
-from libidentifier import IdentifyOptions, identify, inspect, export_cyclonedx
-
-result = identify(
-    Path("samples/ovaa-1.0.0-app-debug.apk"),
-    profiles=Path("profiles.sqlite"),
-    options=IdentifyOptions(),
-)
-result.write_json("libraries.json")
-
-summary = inspect(Path("samples/ovaa-1.0.0-app-debug.apk"))
-export_cyclonedx(result, "components.cdx.json")
+```powershell
+libidentifier vulnerabilities update --database ./advisory-db --ecosystem Maven
+libidentifier vulnerabilities validate --database ./advisory-db
 ```
 
-CycloneDX export includes only high-confidence exact-version components. Structural DEX matches usually identify a family and leave `version` as `null`.
+These example relative paths are explicit destinations, not automatic managed-path
+aliases. An incomplete directory left by a failed advisory download also requires
+explicit `update`; it is not automatically overwritten on the next scan.
+For an air-gapped host, use `vulnerabilities provision --database ./advisory-db
+--archive Maven-all.zip --fetched-at <actual-retrieval-ISO-timestamp>`.
 
-Table output labels these as `Unknown [reference candidates]`. Candidate reference versions are not confirmed installed versions. `family_purl` preserves a versionless package identity for downstream advisory discovery, while coverage reports unmatched-class totals and truncation. The filtered SBOM declares incomplete inventory; an empty SBOM does not mean the APK has no dependencies.
+A managed scanner is not upgraded automatically. Its version/URLs/hashes are
+published in `cli_resources.py`; a new qualified pin arrives with a package
+release. Investigate checksum failures rather than executing the rejected file;
+select a reviewed explicit scanner or remove the invalid managed file and rerun
+setup. No APK or inventory is sent during provisioning or assessment.
 
-## Updating the Catalog
+## Advanced reference generation and results
 
-Add a reviewed reference to `catalog/references.json` with:
+You do not need to build profiles for the quick-start workflow. For custom
+libraries, use the [profile database guide](profile-database.md) and
+[release guide](releases.md). Older schema-1 databases must be rebuilt, never
+relabeled as schema 2.
 
-- Versioned `purl`
-- `repository` and explicit `url`
-- Pinned SHA-256
-- License/provenance notes where useful
-
-Then run:
-
-```sh
-libidentifier profiles fetch --catalog catalog/references.json --cache reference-artifacts
-libidentifier profiles rebuild --catalog catalog/references.json --cache reference-artifacts --database profiles.sqlite --d8 "$ANDROID_HOME/build-tools/36.1.0/d8" --android-jar "$ANDROID_HOME/platforms/android-35/android.jar"
-```
-
-Do not add automatic upstream version discovery to the catalog workflow. Catalog entries are curated.
-
-## Common Errors
-
-- `no profile database specified`: pass `--profiles`, set `LIBIDENTIFIER_PROFILES`, or build `profiles.sqlite`.
-- `profile database fingerprint algorithm is incompatible`: rebuild the database with the current code and catalog.
-- `JAR/AAR profile building requires explicit d8`: pass `--d8` and usually `--android-jar`.
-- `downloaded reference hash mismatch`: the downloaded artifact does not match the catalog; do not build a profile until the catalog is reviewed.
-- Empty components with many unknown classes: parsing succeeded, but the database did not contain sufficient matching profiles.
-
-## Limitations
-
-- Identification is offline. Optional local advisory assessment uses OSV-Scanner only for generated dependencies, without sending APK contents or accessing the network.
-- JavaScript, Hermes, Dart AOT and Flutter package dependency identification are not supported.
-- DEX fingerprints are conservative and shape-based. R8 shrinking or partial embedded libraries can reduce confidence.
-- Exact versions are not guessed from structural similarity. Version remains unknown unless there is a strong exact-version signal.
-
-## Complete Output and Optional Advisory Assessment
-
-All parsed unmatched definitions are returned by default. To request a deliberately capped JSON view, add `--max-unknown-classes 1000`; original totals and truncation remain visible. Matching and extraction are unaffected. Prefer `--output` or `result.write_json()` for large results; serialization streams without a full extra dictionary/string.
-
-Install a trusted native OSV-Scanner v2 executable from [GitHub releases](https://github.com/google/osv-scanner/releases) or an [officially documented package manager](https://google.github.io/osv-scanner/installation/) on PATH or in your working directory. Windows users can run `winget install Google.OSVScanner`. GitHub v2.7.0 and WinGet/GitHub v2.6.0 are tested; other v2 builds must pass the same version/required-offline-flag checks. Then:
-
-```sh
-libidentifier identify samples/ovaa-1.0.0-app-debug.apk --profiles profiles.sqlite --vulnerabilities --format table
-```
-
-The CLI finds the scanner automatically and selects `./advisory-db` if present, otherwise a persistent user cache. A missing database is downloaded and validated before strictly offline assessment. Add `--offline` to prohibit downloads. `--osv-scanner <path>` and `--osv-db <directory>` override discovery. Missing scanners give a warning and complete identification; JSON reports `scanner_missing` and `not_assessed`, never a clean vulnerability result. Existing stale/corrupt databases require an explicit update:
-
-The original release filenames work without renaming: `osv-scanner_windows_amd64.exe`, `osv-scanner_windows_arm64.exe`, `osv-scanner_linux_amd64`, and `osv-scanner_linux_arm64`, on their respective platforms. Conventional `osv-scanner` / `osv-scanner.exe` names also work. Darwin binaries are unsupported and `osv-scanner_SHA256SUMS` is not an executable. Missing-scanner warnings link to [downloads](https://github.com/google/osv-scanner/releases).
-
-The executable no longer needs to match one release's hard-coded hashes. Its actual version/path/hash are recorded. Install from a trusted source and verify publisher provenance; the runtime compatibility check does not authenticate the publisher. For strict pinning, add `--osv-scanner-sha256 <publisher-verified-64-hex-digest>`. v1, unidentified builds, future major versions and missing required flags produce an explicit compatibility error; the selected path is shown so an explicit override can select another installation. Scanning never downloads a scanner or performs online verification.
-
-```sh
-libidentifier vulnerabilities update --database advisory-db --ecosystem Maven
-libidentifier vulnerabilities validate --database advisory-db
-libidentifier scan samples/ovaa-1.0.0-app-debug.apk --profiles profiles.sqlite --vulnerabilities --osv-scanner /opt/tools/osv-scanner --osv-db advisory-db --format table
-```
-
-On Windows, substitute your `osv-scanner.exe` path if using an override. Only setup of an absent database or explicit `update` downloads the fixed Maven archive; OSV assessment is always offline. Python scanning APIs never download. Air-gapped users can use `vulnerabilities provision --database advisory-db --archive Maven-all.zip --fetched-at <actual-retrieval-ISO-timestamp>` and assess with `--offline`.
-
-High-confidence exact versions can produce affected-version matches. Unknown versions can produce potential package advisories but never confirmed applicability. Advisory attribution requires a valid identity score of at least 0.75 by default, including qualifying medium-confidence identities; use `--min-identity-score 0.85` to change it, or Python `VulnerabilityOptions(min_identity_score=0.85, scanner=..., database=...)`. Unsupported ecosystems remain unassessed. Existing APK samples do not have reliable installed library versions; expect potential or unassessed results. Findings do not prove reachability or exploitability. Full commands, public models, Python examples and error handling are in [integration.md](integration.md).
-
-Tables show library names, identity labels with scores, unknown versions with reference candidates, and advisory counts when requested. The vulnerability section distinguishes confirmed and potential matches and preserves affected-range boundaries from OSV; unavailable version ranges have no `Affected:` message. Columns wrap in narrow terminals, with stacked fields on very narrow screens. In OVAA, Retrofit's score of 0.837 qualifies at the default threshold despite its medium identity label.
+Full JSON includes evidence, ownership uncertainty, unknown classes, clusters
+and typed relationships. All parsed unmatched definitions are returned by default;
+`--max-unknown-classes` affects output only and retains total/truncation metadata.
+`--no-calls`, `--no-relationships` and `--no-grouping` reduce optional enrichment.
+Tables summarize identity/version confidence and distinguish confirmed version
+matches, potential package advisories and unassessed components. Static references
+do not prove runtime execution, reachability or exploitability.

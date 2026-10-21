@@ -27,6 +27,8 @@ def check(folder):
                 or "moraine" in name.lower() or name.endswith((".sqlite", ".exe", ".pyc"))):
                 raise ValueError(f"unexpected distribution member: {name}")
         assert any(n.endswith("libidentifier/profiles/distribution.py") for n in names)
+        assert any(n.endswith("libidentifier/cli_setup.py") for n in names)
+        assert any(n.endswith("libidentifier/cli_resources.py") for n in names)
         assert any(n.endswith("libidentifier/fingerprint/dex_v2.py") for n in names)
         assert not any(n.endswith("fingerprint/dex_v1.py") for n in names)
         record = BytesParser().parsebytes(metadata)

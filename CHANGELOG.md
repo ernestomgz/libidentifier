@@ -2,6 +2,11 @@
 
 ## 0.2.0rc1 — Stage 2 preview (publication pending)
 
+- Managed `scan app.apk` first-run setup with one consent prompt, `--yes`, strict
+  `--offline`, project-pinned scanner downloads and persistent per-user resources.
+- `--vulns` alias, table default for managed scans, preserved explicit-profile
+  JSON defaults and download-free analysis APIs; optional failures retain inventory.
+
 - Explicit profile packaging/acquisition APIs and CLI, portable release manifests,
   hashes, engine compatibility, bounded downloads/decompression, SQLite integrity
   checks and atomic install with explicit replacement. Analysis remains offline.

@@ -40,3 +40,12 @@ BOM, dependency-management and profile context remains preserved but unresolved.
 Source release declarations stay distinct from observed APK code references.
 See [profile storage](profile-database.md) for internal schema/rebuild rules.
 
+
+`cli_setup.py` is a CLI-only orchestration layer for managed scans without profile
+overrides. It gathers missing resources, obtains one consent decision, invokes
+explicit profile/advisory maintenance and installs a scanner pinned by
+`cli_resources.py`. Scanner bytes are bounded and checked before execution.
+The same pin catalog is used by native CI; no GitHub latest lookup occurs.
+After setup the managed assessment path is forced offline, including when setup
+was declined or failed. Existing explicit commands and analysis APIs keep their
+previous resource policies.

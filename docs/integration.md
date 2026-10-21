@@ -4,6 +4,38 @@ LibIdentifier is an independent, offline Python package for identifying known th
 
 This document defines the public scan integration contract. Stage 3 may replace fingerprints, matchers and databases while preserving this contract. The technical specification describes the original design; verified current code and this guide take precedence over its illustrative examples and proposed thresholds.
 
+## Managed CLI setup (analysis API behavior is unchanged)
+
+`libidentifier scan app.apk` without `--profiles` or `LIBIDENTIFIER_PROFILES`
+selects managed profiles and the compact table. Add `--vulns` (alias of
+`--vulnerabilities`) for advisory assessment. First use lists missing resources,
+shows destinations and asks once before downloads. `--yes` authorizes that setup
+in scripts; noninteractive input is never read. `--offline` prohibits all
+provisioning even with `--yes`. Existing resources are reused, never refreshed.
+
+Explicit profile paths/environment retain the legacy JSON default. Explicit
+`--format` is authoritative; `--output` alone selects JSON in managed mode.
+Progress and consent messages go to stderr; table/JSON goes to stdout or the
+requested output file. `identify`, `inspect`, and public analysis API signatures
+retain their existing defaults and download-free behavior.
+
+Managed root: Windows `%LOCALAPPDATA%/LibIdentifier`, Linux
+`${XDG_CACHE_HOME:-~/.cache}/libidentifier`; override with `LIBIDENTIFIER_HOME`.
+Managed profiles are `profiles/profiles.sqlite`, scanner binaries are beneath
+`tools/osv-scanner/<version>/`, and advisories are in `advisory-db`. Explicit
+scanner/database flags override these paths. Automatic scanner installation uses
+only platform-specific publisher URLs and SHA-256 pins in `cli_resources.py`;
+currently qualified Windows/Linux x64 OSV 2.7.0. Unknown platforms are not mapped
+to a different architecture. Existing discovered executables are automatically
+reused only if they match the project pin. Explicit scanners keep the native v2
+interface/caller-pin policy described below.
+
+Required profile setup failures stop the scan. Optional setup failures/declines
+preserve identification and produce a blocked, explicitly unassessed advisory
+result. All scanner hash checks precede execution. The CLI setup phase may
+acquire resources; actual assessment always invokes OSV offline. No submitted
+binary is executed or uploaded. See [quick start](quickstart.md) for user steps.
+
 ## Stage 2 evidence, clusters and relationships
 
 Existing `identify`, `inspect`, `scan`, `correlate`, profile-building and SBOM
@@ -374,7 +406,7 @@ Complete output is not complete dependency knowledge. Skipped members, unsupport
 
 ## Optional offline advisory assessment
 
-Identification works without OSV installed. The assessment adapter supports **OSV-Scanner v2** native Windows/Linux executables from trusted installations, including GitHub releases, WinGet, Scoop, Linux package managers and identifiable v2 source builds. It no longer restricts installations to one release's binary hashes. Install from [officially documented channels](https://google.github.io/osv-scanner/installation/), or download the matching architecture from [GitHub releases](https://github.com/google/osv-scanner/releases) and verify the publisher's checksum/provenance. On Windows, `winget install Google.OSVScanner` is supported. Linux release binaries need execute permission. The CLI searches PATH first, then the working directory; `--osv-scanner <path>` overrides discovery. The first discovered executable is checked rather than silently skipped. LibIdentifier never downloads, installs or upgrades executables. No additional Python dependency or Docker is required.
+Identification works without OSV installed. The assessment adapter supports **OSV-Scanner v2** native Windows/Linux executables from trusted installations, including GitHub releases, WinGet, Scoop, Linux package managers and identifiable v2 source builds. It no longer restricts installations to one release's binary hashes. Install from [officially documented channels](https://google.github.io/osv-scanner/installation/), or download the matching architecture from [GitHub releases](https://github.com/google/osv-scanner/releases) and verify the publisher's checksum/provenance. On Windows, `winget install Google.OSVScanner` is supported. Linux release binaries need execute permission. The CLI searches PATH first, then the working directory; `--osv-scanner <path>` overrides discovery. For legacy explicit-profile commands, the first discovered executable is checked rather than silently skipped. Managed CLI setup can download its pinned executable after consent; analysis APIs never install tools, and no scan upgrades an installed executable. No additional Python dependency or Docker is required.
 
 Compatibility checks require an identifiable semantic v2 version and the `scan source` flags `--offline`, `--no-resolve`, `--no-call-analysis`, `--all-packages`, `--all-vulns`, `--format`, `--config`, and `--lockfile`. Version/help probes are bounded and run in a private directory; the help probe also includes `--offline`. Actual JSON output, inventory coordinates and exit-code consistency are still validated. Versions 2.6.0 (including WinGet) and 2.7.0 have been exercised on Windows/Linux. Other v2 releases/builds pass the same interface checks; this is not a claim of exhaustive release-by-release testing. v1, unidentifiable development builds, future major versions and builds lacking required flags return `scanner_incompatible`. Pre-release/build metadata is retained if the reported version is an identifiable v2 SemVer. Upstream documents [same-major CLI/JSON compatibility](https://google.github.io/osv-scanner/installation/#semver-adherence); incompatible actual output still fails explicitly.
 
@@ -401,7 +433,7 @@ Supply the actual retrieval timestamp, not the time an old archive was copied. W
 
 Updates download only the fixed published ecosystem archive URL, enforce archive/record size bounds, build a package-discovery index, validate contents and hashes, and atomically publish `CURRENT.json` referring to an immutable generation. Failed downloads, invalid archives and failed publication preserve the preceding usable generation. Old generations are retained for rollback and active readers; no automatic cleanup or refresh of existing snapshots occurs. `provision` and `validate` are offline. Neither requires OSV installed. Consumers should use these functions/commands rather than manipulating snapshot files or database tables.
 
-The Python `identify`, `inspect`, `scan` and `correlate` APIs never download. Their explicit maintenance function `update_advisory_database` is the advisory network operation. Assessment-enabled CLI commands can call it during setup, before offline assessment, if the selected database directory is absent. Use `--offline` to prohibit this setup download. Existing `profiles fetch/rebuild` maintenance behavior remains independent.
+The Python `identify`, `inspect`, `scan` and `correlate` APIs never download. The explicit maintenance function `update_advisory_database` is the advisory network operation. Managed CLI setup additionally installs profiles and a pinned scanner after consent. Assessment-enabled CLI commands can call it during setup, before offline assessment, if the selected database directory is absent. Use `--offline` to prohibit this setup download. Existing `profiles fetch/rebuild` maintenance behavior remains independent.
 
 CLI database selection is `--osv-db <directory>`, otherwise an existing `./advisory-db`, otherwise the persistent user cache: `%LOCALAPPDATA%/LibIdentifier/advisory-db` on Windows (falling back to `~/AppData/Local`), or `$XDG_CACHE_HOME/libidentifier/advisory-db` on Linux (falling back to `~/.cache`). A missing directory, including an explicit override, is automatically provisioned from the fixed official Maven archive URL unless `--offline` is set. No package names, versions, APK contents or inventories are transmitted. Scanner approval happens before any download. Existing directories, including empty, stale or corrupt databases, are never silently overwritten or refreshed; use `vulnerabilities update --database <selected-directory>` explicitly. Interrupted provisioning retains any previous usable generation. A failed first download may leave an empty directory requiring that explicit update.
 

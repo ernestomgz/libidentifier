@@ -127,6 +127,8 @@ def _cmd_sbom(args) -> int:
 
 def _assess(result, args):
     try:
+        if error := getattr(args, "_setup_error", None):
+            raise error
         report = correlate(result, options=prepare_options(args))
     except (AdvisoryError, OSError) as exc:
         report = unavailable_report(result, exc)
@@ -147,7 +149,11 @@ def _write_assessment(result, args):
     else:
         inventory = result.identification if hasattr(result, 'identification') else None
         report = result.vulnerabilities if inventory is not None else result
-        write_table(inventory, report)
+        if args.output:
+            with Path(args.output).open("w", encoding="utf-8") as stream:
+                write_table(inventory, report, stream=stream)
+        else:
+            write_table(inventory, report)
 
 
 def _assessment_exit(result):
@@ -165,8 +171,12 @@ def _assessment_exit(result):
 
 def _cmd_scan(args):
     profiles = args.profiles or os.environ.get("LIBIDENTIFIER_PROFILES")
+    managed = not profiles
+    if args.format is None:
+        args.format = "table" if managed and not args.output else "json"
     if not profiles:
-        raise ProfileError("scan requires --profiles or LIBIDENTIFIER_PROFILES")
+        from .cli_setup import prepare_managed_scan
+        profiles = prepare_managed_scan(args)
     if args.vulnerabilities:
         identification = identify(args.path, profiles=profiles,
             options=_identify_options(args))
@@ -217,7 +227,7 @@ def build_parser() -> argparse.ArgumentParser:
     identify_p.add_argument("--format", choices=["json", "table"], default="json")
     identify_p.add_argument("--output")
     identify_p.add_argument("--max-unknown-classes", type=int, default=None)
-    identify_p.add_argument("--vulnerabilities", action="store_true")
+    identify_p.add_argument("--vulnerabilities", "--vulns", action="store_true")
     identify_p.set_defaults(func=_cmd_identify)
 
     profiles_p = sub.add_parser("profiles")
@@ -270,7 +280,8 @@ def build_parser() -> argparse.ArgumentParser:
     scan_p = sub.add_parser("scan")
     scan_p.add_argument("path")
     scan_p.add_argument("--profiles")
-    scan_p.add_argument("--vulnerabilities", action="store_true")
+    scan_p.add_argument("--vulnerabilities", "--vulns", action="store_true")
+    scan_p.add_argument("--yes", action="store_true", help="authorize first-run managed resource downloads without prompting")
     scan_p.add_argument("--max-unknown-classes", type=int, default=None)
     scan_p.set_defaults(func=_cmd_scan)
     correlate_p = sub.add_parser("correlate")
@@ -282,12 +293,12 @@ def build_parser() -> argparse.ArgumentParser:
         command.add_argument('--no-grouping', action='store_true', help='skip unattributed clustering')
     for command in (scan_p, correlate_p, identify_p):
         if command is not identify_p:
-            command.add_argument("--format", choices=["json", "table"], default="json")
+            command.add_argument("--format", choices=["json", "table"], default=None if command is scan_p else "json")
             command.add_argument("--output")
         command.add_argument("--osv-scanner")
         command.add_argument("--osv-scanner-sha256", help="optional SHA-256 pin for the selected executable")
         command.add_argument("--osv-db")
-        command.add_argument("--offline", action="store_true", help="prohibit advisory database downloads (assessment always runs offline)")
+        command.add_argument("--offline", action="store_true", help="prohibit all setup downloads (assessment always runs offline)")
         command.add_argument("--osv-timeout", type=float, default=60)
         command.add_argument("--max-database-age-days", type=float, default=30)
         command.add_argument("--no-potential", action="store_true")

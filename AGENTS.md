@@ -20,6 +20,10 @@ Identification and Python assessment APIs never download. Actual OSV assessment
 always uses offline mode. Assessment CLI may provision a wholly missing advisory
 database unless `--offline`; existing databases require explicit update. Preserve
 scanner discovery and graceful fallback. Never execute submitted APK code.
+Managed CLI scan setup may install missing profiles and a project-pinned scanner
+after one consent decision or --yes; --offline prohibits all setup downloads.
+Keep that orchestration separate from download-free analysis APIs and preserve
+legacy explicit-profile JSON defaults.
 
 Run `python -m pytest -q` with a supported Python and pinned LIEF; see
 `docs/development/testing.md` for native OSV, platform and environment details.
