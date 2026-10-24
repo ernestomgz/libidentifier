@@ -20,5 +20,20 @@ M2 increments internal database schema and requires explicit rebuild; existing
 generation calls remain supported. M4 freezes semantics, not scores or findings.
 Stage status is recorded only in the linked [Stage 2 checklist](stages/stage-2.md).
 
+Post-integration priorities (2026-10-23):
+
+1. Preserve consumer compatibility and expose a stable approved-scanner descriptor/
+   preflight maintenance API; current CLI pin lookup is not a public integration API.
+2. AndroidX version-file declarations now reuse existing evidence models,
+   preserving unsupported/unattributed data conservatively; qualify their measured
+   benefit through the benchmarks below. See the [contract](../integration.md#stage-2-evidence-clusters-and-relationships).
+3. Establish representative build-ground-truth benchmarks and negative controls,
+   then expand trusted profiles, AndroidX coverage and published metadata.
+4. Measure metadata gains and errors (exact-version precision and coverage
+   separately), then prioritize D8/R8 variants and matching improvements.
+
+Consumer completion and successful publication reported by the maintainer do not
+replace platform-specific qualification or measured Stage 3 accuracy acceptance.
+
 [Stage 1](stages/stage-1.md) is the baseline. [Stage 3](stages/stage-3.md)
 targets production quality; [future work](stages/future.md) is optional research.

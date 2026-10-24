@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Recognize known AndroidX `.version` metadata, preserving identity/version/file
+  evidence even without code matches. Shared Maven/AndroidX corroboration and
+  conflict checks prevent metadata-only confirmed vulnerability assessment.
+  Public schemas, API signatures, compact CLI and profile format are unchanged.
+
 ## 0.2.0rc1 — Stage 2 preview (publication pending)
 
 - Complete PyPI/GitHub source installation routes, Windows activation-free

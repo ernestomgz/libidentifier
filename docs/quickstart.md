@@ -220,6 +220,22 @@ large results and JSON models, use the [public API guide](integration.md).
 
 ## Advanced reference generation and results
 
+APK metadata can improve version coverage: known AndroidX `.version` and Maven
+`pom.properties` declarations are preserved with their file locations in full
+JSON, including `inspect` without profiles. Only code-corroborated versions enter
+the library table and exact-version advisory assessment. An embedded declaration
+alone is not proof of an installed dependency; unrelated `.version` files are
+ignored. See the [metadata contract](integration.md#stage-2-evidence-clusters-and-relationships).
+
+```powershell
+libidentifier inspect app.apk --output inventory.json
+```
+
+Look for `evidence_records` with `kind: "version_metadata"`: `details.declared`
+contains the coordinates/version and `location.member` names the file. This
+also makes declarations useful before the reference catalog covers that library;
+the compact table continues to summarize code-identified components.
+
 You do not need to build profiles for the quick-start workflow. For custom
 libraries, use the [profile database guide](profile-database.md) and
 [release guide](releases.md). Older schema-1 databases must be rebuilt, never

@@ -48,12 +48,15 @@ def _is_symlink(info: zipfile.ZipInfo) -> bool:
 def _interesting_by_path(name: str) -> bool:
     from .extractors.metadata import ASSETS
 
+    from .extractors.version_metadata import is_androidx_version_member
+
     lowered = name.lower()
     base = PurePosixPath(lowered).name
     return (
         (base.startswith("classes") and base.endswith(".dex"))
         or (lowered.startswith("lib/") and lowered.endswith(".so"))
         or lowered.endswith("/pom.properties")
+        or is_androidx_version_member(name)
         or lowered == "androidmanifest.xml"
         or base in {"libflutter.so", "libapp.so"}
         or any(name in paths for paths in ASSETS.values())
@@ -127,7 +130,8 @@ def read_selected_members(path, options: IdentifyOptions) -> tuple[list[ArchiveM
             if fmt == "unknown" and (name.lower().endswith(".dex") or name.lower().endswith(".so")):
                 errors.append(AnalysisError("member_read_error", name, "Selected binary has invalid magic", "error"))
                 continue
-            if fmt in {"unknown", "zip"} and name.lower().endswith("/pom.properties"):
+            from .extractors.version_metadata import is_androidx_version_member
+            if fmt in {"unknown", "zip"} and (name.lower().endswith("/pom.properties") or is_androidx_version_member(name)):
                 fmt = "metadata"
             members.append(ArchiveMember(name=name, format=fmt, data=data, sha256=hashlib.sha256(data).hexdigest()))
     return members, errors

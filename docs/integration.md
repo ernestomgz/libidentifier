@@ -106,12 +106,26 @@ The corresponding `inspect`/`identify`/`scan` CLI switches are
 `--no-relationships`, `--no-calls`, `--no-grouping`; table layout is unchanged.
 Disabling enrichment can reduce runtime/memory while preserving identification.
 
-Supported canonical `META-INF/maven/<group>/<artifact>/pom.properties` declarations
+Supported canonical `META-INF/maven/<group>/<artifact>/pom.properties` and
+`META-INF/androidx.<group>_<artifact>.version` declarations
 may establish a version only when they agree with identified code, an observed
 reference candidate and sufficient exact-descriptor evidence. Raw strings and
 unattributed metadata never establish a version. Conflicting declarations retain
 unknown versions and evidence. These modifiable declarations are not signed proof
 of artifact provenance. Stage 3 can improve this evidence through existing fields.
+
+AndroidX version files contain one bounded literal version token. Only this known
+AndroidX filename convention is recognized; arbitrary `.version` files are not
+AndroidX identities. Both supported conventions emit `version_metadata` evidence
+even without identified code, including through `inspect`: `details.declared`
+preserves `groupId`, `artifactId`, `version`; `location` preserves the container,
+member and content hash. `details.convention` identifies the parser and
+`component_ids` records attributable matches (empty without code). Declarations
+alone create no components or advisory assessments. Promotion requires unique
+component attribution in the same container, at least three matched code locators
+and three exact-descriptor matches, and a supported reference version. Maven and
+AndroidX declarations participate in the same conflict check. Unknown versions
+and metadata absent/unreliable cases retain fingerprint matching behavior.
 
 `details`, `qualifiers`, quality indicators, producer names and diagnostic codes
 are extensible; preserve unfamiliar values without assuming a fixed key set.

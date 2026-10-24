@@ -48,6 +48,14 @@ in `.development-deps/` or a working local venv. Create `.pytest_tmp` before usi
 a nested basetemp. Do not check generated databases or machine-local notes into Git.
 The [Stage 2 checklist](stages/stage-2.md) owns acceptance status.
 
+AndroidX regressions in `tests/test_androidx_versions.py` cover bounded known
+filename/content parsing, unmatched declarations through `inspect`, exact file
+hash/location and JSON round-trip, code/reference corroboration, cross-convention
+conflicts, wrong coordinates, unsupported versions, weak code, cross-container
+isolation, malformed/duplicate metadata and native offline advisory assessment.
+Native assessment contrasts exact-version matching with package-only potential
+findings and verifies metadata-only inputs never generate advisory findings.
+
 Benchmark protocol: use reproducible apps with build-ground-truth coordinates,
 versions, compiler/keep settings and hashes; include independent held-out families,
 negative controls, full/renamed/shrunk libraries and shared generic code. Keep

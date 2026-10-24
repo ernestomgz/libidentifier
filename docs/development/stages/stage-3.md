@@ -1,5 +1,10 @@
 # Stage 3 production quality
 
+Initial incremental work: AndroidX version-file declarations now use the existing
+evidence/attribution models; see the [metadata contract](../../integration.md#stage-2-evidence-clusters-and-relationships).
+This adds a detection signal, not a measured accuracy/coverage claim. Matching
+reference coverage remains necessary before a declaration can establish a version.
+
 Expand trusted historical/current Android catalog coverage (C1–C2); improve
 hierarchy and attributable metadata evidence (C2), version differential features
 (C2–C3), selected D8/R8 variants, normalized opcodes if measured useful, evidence

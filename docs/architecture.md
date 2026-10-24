@@ -40,6 +40,12 @@ BOM, dependency-management and profile context remains preserved but unresolved.
 Source release declarations stay distinct from observed APK code references.
 See [profile storage](profile-database.md) for internal schema/rebuild rules.
 
+`extractors/version_metadata.py` parses known embedded Maven/AndroidX declaration
+conventions. Inventory retains location/content hashes; evidence survives without
+code matches. A shared attribution/conflict stage can promote only versions
+corroborated by matching code and references. Unattributed declarations never
+create components. See the [public contract](integration.md#stage-2-evidence-clusters-and-relationships).
+
 
 `cli_setup.py` is a CLI-only orchestration layer for managed scans without profile
 overrides. It gathers missing resources, obtains one consent decision, invokes

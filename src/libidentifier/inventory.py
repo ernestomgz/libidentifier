@@ -144,14 +144,14 @@ def _scan_file(path: Path, options: IdentifyOptions, *, top_input: Path | None =
             if member.format in {"dex", "elf"}:
                 _analyze_blob(inv, member.data, fmt=member.format, container=str(path), member=member.name, path=None)
             elif member.format == 'metadata':
-                from .extractors.version_metadata import read_properties
+                from .extractors.version_metadata import read_version_metadata
                 from .models import CodeLocator
-                props = read_properties(member.data, member.name)
+                props = read_version_metadata(member.data, member.name)
                 if props:
                     inv.version_metadata.append((CodeLocator(str(path), member.name, sha256=member.sha256), props))
                 else:
                     inv.metadata_issues.append(AnalysisError('version_metadata_unsupported', member.name,
-                        'Unsupported or inconsistent Maven properties; no version inferred'))
+                        'Unsupported or inconsistent embedded version declaration; no version inferred'))
         inv.frameworks_detected = detect_frameworks(members, inv.dex_classes, inv.elf_features, container=str(path))
         inv.selected_bytes = sum(len(member.data) for member in members)
     _coverage(inv)

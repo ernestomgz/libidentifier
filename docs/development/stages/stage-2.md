@@ -58,3 +58,11 @@ activation-free Windows usage and exact managed update paths. Normal Windows
 source installation plus profile-free inspection passed; see the follow-up in
 [local evidence](../validation/managed-cli-windows-2026-10-21.md). No analysis API
 or runtime behavior changed in that documentation follow-up.
+
+AndroidX version-file follow-up reuses the completed public evidence/assessment
+contract without API/JSON/profile-schema changes. Known declarations are preserved
+without profiles and require code/reference corroboration before version promotion.
+Maven/AndroidX conflicts abstain. Validation and platform scope are recorded in
+[AndroidX metadata evidence](../validation/androidx-metadata-windows-2026-10-23.md);
+230 native Windows tests passed with no skips. Stage 3 accuracy qualification
+remains independent.
